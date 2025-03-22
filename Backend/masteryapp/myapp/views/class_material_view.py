@@ -12,11 +12,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-
+from .....gcp.uploadpdf import upload_and_process_pdf
 from ..models.course import Course
 from ..models.subject import Subject
 from ..models.material_snippet import MaterialSnippet
 from ..serializers.course_serializer import CourseSerializer
+from ..serializers.material_snippet_serializer import MaterialSnippetSerializer
 
 from io import BytesIO
 from pdfminer.high_level import extract_text
@@ -59,7 +60,12 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
         existing_subjects_qs = Subject.objects.filter(course__id=course_id)
         existing_subjects = {str(subcat.name.lower()): subcat for subcat in existing_subjects_qs}
         
-        parse_result = {} # CALL FUNCTION HERE
+        parse_result = upload_and_process_pdf(file_obj=pdf_file, 
+                                              bucket_name="educatorgenai", 
+                                              user_id=str(request.user.id),
+                                              credentials_path='genaigenesis-454500-2b74084564ba.json',
+                                              file_name=material_raw['file_name']
+                                              )
         
         success, text_partition_status = parse_result.get('success', False), parse_result.get('text_extracted', False)
         

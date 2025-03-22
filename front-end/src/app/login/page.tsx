@@ -21,7 +21,7 @@ export default function LoginPage() {
     }
 
     if (email === "test@example.com" && password === "123") {
-      router.push("/to-be-built");
+      router.push("/temp");
     } else {
       setError('Incorrect email or password');
     }

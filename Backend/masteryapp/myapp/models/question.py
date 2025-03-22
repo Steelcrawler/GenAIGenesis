@@ -5,6 +5,7 @@ from .quiz import Quiz
 import uuid
 from django.contrib.auth.models import User
 from .subject import Subject
+from .material_snippet import MaterialSnippet
 
 class QuestionType(models.TextChoices):
     SHORT_ANSWER = 'SHORT_ANSWER', 'Short answer'
@@ -25,6 +26,6 @@ class Question(models.Model):
     attempted_short_answer = models.TextField(null=True)
     is_correct = models.BooleanField(null=True)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    snippet = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True)
+    snippet = models.ForeignKey(MaterialSnippet, on_delete=models.SET_NULL, null=True)
     
     

@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
 
-// On autorise 'files' comme tableau de fichiers
 const formSchema = z.object({
   name: z.string().min(1, "Course name is required"),
   description: z.string().min(1, "Description is required"),
@@ -49,7 +48,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Conversion File -> base64
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -61,13 +59,11 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
       reader.readAsDataURL(file);
     });
 
-  // Gérer l'upload de fichiers multiples
   const handleFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const filesArray = Array.from(e.target.files);
 
     try {
-      // Convertir chaque fichier en base64
       const filePromises = filesArray.map(async (file) => {
         const dataUrl = await fileToBase64(file);
         const courseFile: CourseFile = {
@@ -80,7 +76,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
 
       const uploadedFiles = await Promise.all(filePromises);
 
-      // Fusion avec d'éventuels fichiers existants
       setFormData((prev) => ({
         ...prev,
         files: [...(prev.files || []), ...uploadedFiles],
@@ -91,7 +86,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     }
   };
 
-  // Retirer un fichier
   const handleRemoveFile = (fileId: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -99,7 +93,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     }));
   };
 
-  // Gérer les champs texte
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -115,7 +108,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     }
   };
 
-  // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -131,7 +123,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
         toast.success("Course created successfully");
       }
 
-      // Redirection
       if (isEditing && courseId) {
         router.push(`/course/${courseId}`);
       } else {
@@ -170,7 +161,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nom */}
           <div className="space-y-2">
             <Label htmlFor="name">Course Name</Label>
             <Input
@@ -184,7 +174,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
             {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -201,7 +190,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
             )}
           </div>
 
-          {/* Fichiers multiples */}
           <div className="space-y-2">
             <Label htmlFor="files">Upload Files (PDF, images, etc.)</Label>
             <Input
@@ -215,7 +203,6 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
               <p className="text-sm text-destructive">{errors.files}</p>
             )}
 
-            {/* Liste de fichiers sélectionnés */}
             {formData.files && formData.files.length > 0 && (
               <ul className="mt-4 space-y-1 text-sm">
                 {formData.files.map((file) => (

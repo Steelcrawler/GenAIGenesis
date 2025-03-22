@@ -10,7 +10,7 @@ class Subcategory(models.Model):
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
-        related_name="material"
+        related_name="categories"
     )
     
     

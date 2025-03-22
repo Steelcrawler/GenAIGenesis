@@ -19,7 +19,7 @@ class QuizMakerRAG:
         env_path = './.env'
         load_dotenv(dotenv_path=env_path)
         
-        self.project_id = os.getenv("PROJECT_ID")
+        self.project_id = "genaigenesis-454500" # os.getenv("PROJECT_ID")
         self.location = os.getenv("GOOGLE_CLOUD_REGION", "us-central1")
         
         if self.debug:
@@ -27,7 +27,7 @@ class QuizMakerRAG:
         vertexai.init(project=self.project_id, location=self.location)
         
         # Initialize GCS client
-        self.storage_client = storage.Client()
+        self.storage_client = storage.Client.from_service_account_json(credentials_path)
 
     def list_gcs_files(self, bucket_name: str, prefix: str = "") -> List[str]:
         """List all files in a GCS bucket with given prefix"""
@@ -210,7 +210,7 @@ def select_files(files: List[str]) -> List[str]:
 
 def main():
     debug_mode = False
-    rag = QuizMakerRAG(credentials_path='genaigenesis-454500-aaca4e6f468e.json', debug=debug_mode)
+    rag = QuizMakerRAG(credentials_path='genaigenesis-454500-2b74084564ba.json', debug=debug_mode)
 
     bucket_name = "educatorgenai"
     print("\nFetching available files from GCS bucket...")

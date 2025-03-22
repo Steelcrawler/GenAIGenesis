@@ -9,6 +9,7 @@ from pathlib import Path
 import json
 import time
 from google.cloud import storage
+from google.auth import default
 import uuid
 
 
@@ -24,10 +25,30 @@ class QuizMakerRAG:
         
         if self.debug:
             print(f"Initializing RAG model with project_id: {self.project_id}, location: {self.location}")
-        vertexai.init(project=self.project_id, location=self.location)
         
-        # Initialize GCS client
-        self.storage_client = storage.Client.from_service_account_json(credentials_path)
+        # Get default credentials
+        try:
+            self.credentials, project = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+            if self.debug:
+                print(f"Using default credentials with project: {project}")
+        except Exception as e:
+            if self.debug:
+                print(f"Failed to get default credentials: {e}")
+            # Fallback to service account if provided
+            if credentials_path:
+                if self.debug:
+                    print(f"Falling back to service account credentials: {credentials_path}")
+                self.credentials = None
+                self.storage_client = storage.Client.from_service_account_json(credentials_path)
+            else:
+                raise Exception("No credentials available")
+        
+        # Initialize clients with default credentials if available
+        if hasattr(self, 'credentials') and self.credentials:
+            self.storage_client = storage.Client(credentials=self.credentials, project=self.project_id)
+            vertexai.init(project=self.project_id, location=self.location, credentials=self.credentials)
+        else:
+            vertexai.init(project=self.project_id, location=self.location)
 
     def list_gcs_files(self, bucket_name: str, prefix: str = "") -> List[str]:
         """List all files in a GCS bucket with given prefix"""
@@ -300,7 +321,14 @@ def select_files(files: List[str]) -> List[str]:
 
 def main():
     debug_mode = True  # Set debug mode to True
-    rag = QuizMakerRAG(credentials_path='genaigenesis-454500-2b74084564ba.json', debug=debug_mode)
+    
+    # Try to use default credentials first
+    try:
+        rag = QuizMakerRAG(debug=debug_mode)
+        print("\nUsing default credentials")
+    except Exception as e:
+        print(f"\nFalling back to service account: {e}")
+        rag = QuizMakerRAG(credentials_path='genaigenesis-454500-2b74084564ba.json', debug=debug_mode)
 
     bucket_name = "educatorgenai"
     print("\nInitializing QuizMakerRAG with debug mode enabled")

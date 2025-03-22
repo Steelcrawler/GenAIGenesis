@@ -53,7 +53,6 @@ export default function CourseDetail() {
   return (
     <Layout>
       <div className="container mx-auto px-4 pb-12 animate-fade-in">
-        {/* Back Button */}
         <Button
           variant="ghost"
           className="mb-6 gap-2 cursor-pointer"
@@ -64,7 +63,6 @@ export default function CourseDetail() {
         </Button>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Course Image */}
           <div className="lg:w-1/3">
             <div className={`rounded-lg overflow-hidden border ${!imageLoaded && !imageError ? 'image-loading' : ''} h-64 lg:h-auto lg:aspect-square`}>
               {course.imageUrl && !imageError ? (
@@ -84,7 +82,6 @@ export default function CourseDetail() {
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="mt-6 flex space-x-4">
               <Link href={`/edit-course/${id}`} className="flex-1">
                 <Button className="w-full gap-2 cursor-pointer" variant="outline">
@@ -103,7 +100,6 @@ export default function CourseDetail() {
             </div>
           </div>
 
-          {/* Course Details */}
           <div className="lg:w-2/3">
             <div className="glass rounded-lg p-8">
               <h1 className="text-3xl font-semibold mb-4">{course.name}</h1>
@@ -129,7 +125,6 @@ export default function CourseDetail() {
           </div>
         </div>
 
-        {/* Delete Confirmation Dialog */}
         <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <AlertDialogContent>
             <AlertDialogHeader>

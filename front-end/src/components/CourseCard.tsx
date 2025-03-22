@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Calendar, Edit, Trash } from 'lucide-react';
 import { format } from 'date-fns';
 import { Course } from '@/context/CourseContext';
@@ -77,7 +76,6 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onDelete }) => {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="absolute right-3 top-3 flex gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <button 
            onClick={handleEditClick}

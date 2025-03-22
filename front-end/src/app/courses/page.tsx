@@ -77,7 +77,6 @@ export default function CoursesPage() {
           </div>
         )}
 
-        {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!courseToDelete} onOpenChange={(open) => !open && setCourseToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>

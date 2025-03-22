@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, Optional
 from google.cloud import storage
 from google.cloud.exceptions import NotFound, Forbidden
-from .pdf_sectioner import PDFProcessor
+from pdf_sectioner import PDFProcessor
 
 
 # Set up logging

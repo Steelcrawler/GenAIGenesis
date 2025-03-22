@@ -22,7 +22,7 @@ class PDFProcessor:
         env_path = '../.env'
         load_dotenv(dotenv_path=env_path)
         
-        self.project_id = os.getenv("PROJECT_ID")
+        self.project_id = "genaigenesis-454500" # os.getenv("PROJECT_ID")
         self.location = os.getenv("GOOGLE_CLOUD_REGION", "us-central1")
         
         if self.debug:
@@ -226,7 +226,7 @@ class PDFProcessor:
                     4. The text must contain full sentences and provide substantial information (at least 2-3 sentences when possible).
                     5. Maintain the original context and meaning of the content.
                     6. If no relevant text is found, return an empty array []
-                    7. YOU CANNOT, MUST NOT include exercises, questions, or exam problems.
+                    7. YOU CANNOT, MUST NOT include exercises, questions, or exam problems (so no random numbers).
                     8. Do not include any commentary, formatting markers, or explanations outside the JSON structure.
                     NO QUESTIONS NO QUESTIONS NO QUESTIONS NO EXERCISES NO EXERCISES NO EXERCISES
 
@@ -558,7 +558,7 @@ class PDFProcessor:
 
 def main():
     """Main function to demonstrate PDF processing"""
-    credentials_path = 'genaigenesis-454500-2b74084564ba.json'
+    credentials_path = 'genaigenesis-454500-aaca4e6f468e.json'
     processor = PDFProcessor(debug=True, credentials_path=credentials_path)
     
     # Example usage with a GCS bucket and PDF

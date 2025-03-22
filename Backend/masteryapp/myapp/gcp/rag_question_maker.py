@@ -12,6 +12,13 @@ from google.cloud import storage
 from google.auth import default
 import uuid
 
+# Define required scopes
+SCOPES = [
+    'https://www.googleapis.com/auth/cloud-platform',
+    'https://www.googleapis.com/auth/devstorage.read_write',
+    'https://www.googleapis.com/auth/cloud-language',
+    'https://www.googleapis.com/auth/cloud-vision'
+]
 
 class QuizMakerRAG:
     def __init__(self, credentials_path: Optional[str] = None, debug: bool = False):
@@ -26,11 +33,12 @@ class QuizMakerRAG:
         if self.debug:
             print(f"Initializing RAG model with project_id: {self.project_id}, location: {self.location}")
         
-        # Get default credentials
+        # Get default credentials with all required scopes
         try:
-            self.credentials, project = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+            self.credentials, project = default(scopes=SCOPES)
             if self.debug:
                 print(f"Using default credentials with project: {project}")
+                print(f"Authorized scopes: {' '.join(SCOPES)}")
         except Exception as e:
             if self.debug:
                 print(f"Failed to get default credentials: {e}")
@@ -41,12 +49,16 @@ class QuizMakerRAG:
                 self.credentials = None
                 self.storage_client = storage.Client.from_service_account_json(credentials_path)
             else:
-                raise Exception("No credentials available")
+                raise Exception("No credentials available. Error: " + str(e))
         
         # Initialize clients with default credentials if available
         if hasattr(self, 'credentials') and self.credentials:
             self.storage_client = storage.Client(credentials=self.credentials, project=self.project_id)
-            vertexai.init(project=self.project_id, location=self.location, credentials=self.credentials)
+            vertexai.init(
+                project=self.project_id,
+                location=self.location,
+                credentials=self.credentials
+            )
         else:
             vertexai.init(project=self.project_id, location=self.location)
 

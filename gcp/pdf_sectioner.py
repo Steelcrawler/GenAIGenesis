@@ -220,24 +220,27 @@ class PDFProcessor:
                     prompt = f"""Given the following text content, extract all sections that are relevant to the subject: "{subject}"
 
                     Requirements:
-                    1. Return contiguous blocks of sentences directly relevant to the subject explaining something about the subject. 
-                    2. The sentences MUST be complete and should be somewhat long, should be critical to the subject.
-                    3. No symbols and questions with no context
-                    4. Do not add any commentary or formatting
-                    5. If no relevant text is found, return an empty array []
-                    6. Maintain the original text's accuracy
-                    7. YOU CANNOT include exercises or questions
-                    8. NO SYMBOLS, NO QUESTIONS, NO EXERCISES
+                    1. Extract COMPLETE PARAGRAPHS or substantial blocks of text that discuss the subject in depth.
+                    2. Each text section should be comprehensive and self-contained, explaining a complete thought or concept.
+                    3. DO NOT break up related sentences into tiny fragments - keep related concepts together in a single text section.
+                    4. The text must contain full sentences and provide substantial information (at least 2-3 sentences when possible).
+                    5. Maintain the original context and meaning of the content.
+                    6. If no relevant text is found, return an empty array []
+                    7. YOU CANNOT, MUST NOT include exercises, questions, or exam problems.
+                    8. Do not include any commentary, formatting markers, or explanations outside the JSON structure.
+                    NO QUESTIONS NO QUESTIONS NO QUESTIONS NO EXERCISES NO EXERCISES NO EXERCISES
 
                     Return the text as a JSON array of objects, each having the following structure:
                     [
                         {{
-                            "text": "The relevant text section"
+                            "text": "A complete paragraph or substantive block of text about the subject that includes multiple related sentences..."
                         }},
                         {{
-                            "text": "The relevant text section"
+                            "text": "Another complete section about a different aspect of the subject with full context..."
                         }}
                     ]
+                    
+                    IMPORTANT: DO NOT fragment the text into tiny pieces. Keep related sentences together in cohesive sections.
                     It is MISSION CRITICAL that you return ONLY the JSON array with no additional text.
                     
                     Text content:

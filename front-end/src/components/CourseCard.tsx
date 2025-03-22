@@ -19,7 +19,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onDelete }) => {
   const router = useRouter();
 
   const createdDate = new Date(
-    typeof course.createdAt === 'string' ? course.createdAt : course.createdAt
+    typeof course.created_at === 'string' ? course.created_at : Date.now()
   );
 
   const formattedDate = format(createdDate, 'MMM d, yyyy');
@@ -41,9 +41,9 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onDelete }) => {
           !imageLoaded && !imageError && "image-loading"
         )}
       >
-        {course.imageUrl && !imageError ? (
+        {course.image_path && !imageError ? (
           <img
-            src={course.imageUrl}
+            src={course.image_path}
             alt={course.name}
             className={cn(
               "h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105",

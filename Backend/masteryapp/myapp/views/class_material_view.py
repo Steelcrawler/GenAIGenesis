@@ -1,4 +1,7 @@
+import json
 from rest_framework import viewsets
+
+from ..serializers.material_snippet_serializer import MaterialSnippetSerializer
 
 from ..serializers.class_material_serializer import ClassMaterialSerializer
 from ..serializers.subject_serializer import SubjectSerializer
@@ -18,14 +21,16 @@ from ..models.subject import Subject
 from ..models.material_snippet import MaterialSnippet
 from ..serializers.course_serializer import CourseSerializer
 from ..serializers.material_snippet_serializer import MaterialSnippetSerializer
+from ..auth_backends import CsrfExemptSessionAuthentication
+from rest_framework.authentication import BasicAuthentication
+
 
 from io import BytesIO
-from pdfminer.high_level import extract_text
 
 class ClassMaterialViewSet(viewsets.ModelViewSet):
     queryset = ClassMaterial.objects.all()
     serializer_class = ClassMaterialSerializer
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
     
     
     def get(self, request, *args, **kwargs):
@@ -51,9 +56,11 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        material_raw = data['material']
-        
-        course_id = material_raw['course_id']
+
+        material_raw = json.loads(data['material'])
+
+        print('material_raw: ', material_raw)
+        course_id = data['course_id']
         
         pdf_file = request.FILES.get('file')
         

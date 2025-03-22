@@ -51,11 +51,7 @@ export default function CourseDetail() {
   }
 
   const createdDate = new Date(
-    typeof course.createdAt === "string" ? course.createdAt : course.createdAt
-  );
-
-  const updatedDate = new Date(
-    typeof course.updatedAt === "string" ? course.updatedAt : course.updatedAt
+    typeof course.created_at === "string" ? course.created_at : Date.now()
   );
 
   const handleDelete = () => {
@@ -83,9 +79,9 @@ export default function CourseDetail() {
                 !imageLoaded && !imageError ? "image-loading" : ""
               } h-64 lg:h-auto lg:aspect-square`}
             >
-              {course.imageUrl && !imageError ? (
+              {course.image_path && !imageError ? (
                 <img
-                  src={course.imageUrl}
+                  src={course.image_path}
                   alt={course.name}
                   className={`w-full h-full object-cover transition-opacity duration-500 ${
                     !imageLoaded ? "opacity-0" : "opacity-100"
@@ -140,10 +136,7 @@ export default function CourseDetail() {
                   <Calendar className="mr-2 h-4 w-4" />
                   <span>Created: {format(createdDate, "MMM d, yyyy")}</span>
                 </div>
-                <div className="flex items-center">
-                  <Clock className="mr-2 h-4 w-4" />
-                  <span>Updated: {format(updatedDate, "MMM d, yyyy")}</span>
-                </div>
+                
               </div>
 
               <div className="space-y-6">

@@ -4,7 +4,7 @@ from django.conf import settings
 from .quiz import Quiz
 import uuid
 from django.contrib.auth.models import User
-from .subcategory import Subcategory
+from .subject import Subject
 
 class QuestionType(models.TextChoices):
     SHORT_ANSWER = 'SHORT_ANSWER', 'Short answer'
@@ -25,6 +25,6 @@ class Question(models.Model):
     attempted_short_answer = models.CharField(max_length=3000, null=True)
     is_correct = models.BooleanField(null=True)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, null=True)
+    snippet = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True)
     
     

@@ -1,17 +1,15 @@
 from django.core.validators import RegexValidator
 from django.db import models
 from django.conf import settings
-from .course import Course
 import uuid
 from .class_material import ClassMaterial
-from .subcategory import Subcategory
+from .subject import Subject
 
-class MaterialCut(models.Model):
+class MaterialSnippet(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     class_material = models.ForeignKey(ClassMaterial, on_delete=models.CASCADE)
-    subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, null=True)
-    cut_start = models.PositiveIntegerField()
-    cut_end = models.PositiveIntegerField()
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True)
+    snippet = models.CharField(max_length=5000)
     
     
     

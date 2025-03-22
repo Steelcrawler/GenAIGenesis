@@ -25,7 +25,7 @@ from ..models.material_snippet import MaterialSnippet
 
 from io import BytesIO
 from pdfminer.high_level import extract_text
-from ...gcp.rag_question_maker import QuizMakerRAG
+from ..gcp.rag_question_maker import QuizMakerRAG
 
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()

@@ -14,7 +14,7 @@ from rest_framework.authentication import BasicAuthentication
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     queryset = Course.objects.all()
 
     def get_queryset(self):

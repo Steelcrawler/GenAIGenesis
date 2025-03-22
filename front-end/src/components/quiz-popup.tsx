@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface pdfObject {
   label: string;
@@ -11,20 +12,23 @@ export interface courseObject {
   pdfs: pdfObject[]
 }
 
-interface QuizPopupProps {
+export interface QuizPopupProps {
   handleCancel: () => void;
   courses: courseObject[];
 }
 
-export default function QuizPopup({ handleCancel, courses: courseOptions } : QuizPopupProps ) {
+export default function QuizPopup({ handleCancel, courses } : QuizPopupProps ) {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string>('');
+  const router = useRouter();
 
   const handleSubmit = () => {
     if (!selectedCourse || !selectedOption) {
       alert('Please select both a category and the material before submitting.');
       return;
     }
+
+    router.push("/quiz/0")
   };
 
   return (
@@ -49,7 +53,7 @@ export default function QuizPopup({ handleCancel, courses: courseOptions } : Qui
                 className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Select a course --</option>
-                {courseOptions && courseOptions.map((option) => (
+                {courses && courses.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
@@ -67,7 +71,7 @@ export default function QuizPopup({ handleCancel, courses: courseOptions } : Qui
               className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All course documents</option>
-              {selectedCourse && courseOptions && courseOptions.filter((option) => option.id === selectedCourse)[0].pdfs?.map((option) => (
+              {selectedCourse && courses && courses.filter((option) => option.id === selectedCourse)[0].pdfs?.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>

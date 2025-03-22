@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { ClipboardCheck, Search } from 'lucide-react';
 import QuizPopup from './quiz-popup';
 import { courseObject } from './quiz-popup';
-import { PdfLoader, PdfHighlighter, Highlight, Popup, AreaHighlight } from 'react-pdf-highlighter';
-import { testHighlights } from './test-highlights'; // Optional: for testing highlights
-import type { IHighlight } from 'react-pdf-highlighter';
+import { useRouter } from 'next/navigation';
 
 interface PDFViewerProps {
   pdfUrl?: string;
@@ -28,12 +26,13 @@ export default function PDFViewer({
   const [isQuizOpen, setIsQuizOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [activeHighlights, setActiveHighlights] = useState<string[]>(textToHighlight);
-  const [highlights, setHighlights] = useState<IHighlight[]>([]);
+  const [scale, setScale] = useState<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [activeHighlights, setActiveHighlights] = useState<string[]>(textToHighlight);
+  const router = useRouter();
 
   const handleQuiz = () => {
-    setIsQuizOpen(!isQuizOpen);
+    router.push("/quiz-config")
   };
 
   const toggleSearch = () => {
@@ -44,59 +43,12 @@ export default function PDFViewer({
   const addHighlight = () => {
     if (searchTerm && !activeHighlights.includes(searchTerm)) {
       setActiveHighlights([...activeHighlights, searchTerm]);
-      // Add logic to create a highlight in the PDF
-      // This is a placeholder; you'll need to implement the actual highlight creation
-      const newHighlight: IHighlight = {
-        content: { text: searchTerm },
-        position: {
-          boundingRect: {
-            x1: 0, y1: 0, x2: 0, y2: 0, width: 0, height: 0,
-          },
-          rects: [],
-          pageNumber: 1,
-        },
-        comment: { text: '', emoji: '' },
-        id: Date.now().toString(),
-      };
-      setHighlights([...highlights, newHighlight]);
     }
   };
 
   // Function to remove a highlight
   const removeHighlight = (text: string) => {
     setActiveHighlights(activeHighlights.filter(item => item !== text));
-    setHighlights(highlights.filter(highlight => highlight.content.text !== text));
-  };
-
-  const highlightTransform = (
-    highlight: IHighlight,
-    index: number,
-    setTip: (highlight: IHighlight, callback: (highlight: IHighlight) => JSX.Element) => void,
-    hideTip: () => void,
-    viewportToScaled: (rect: any) => any,
-    screenshot: (rect: any) => string,
-    isScrolledTo: boolean
-  ) => {
-    const isTextHighlight = !Boolean(highlight.content.image);
-  
-    const component = (
-      <div
-        style={{
-          background: highlightColor,
-          borderRadius: '2px',
-          cursor: 'pointer',
-        }}
-        onClick={() => {
-          setTip(highlight, () => (
-            <HighlightPopup {...highlight} />
-          ));
-        }}
-      >
-        {isTextHighlight && highlight.content.text}
-      </div>
-    );
-  
-    return component;
   };
 
   return (
@@ -175,22 +127,27 @@ export default function PDFViewer({
 
       {/* PDF Viewer */}
       <div className="relative flex-grow overflow-auto h-full" ref={containerRef}>
-        {pdfUrl ? (
-          <PdfLoader url={pdfUrl} beforeLoad={<div>Loading...</div>}>
-            {(pdfDocument) => (
-              <PdfHighlighter
-                pdfDocument={pdfDocument}
-                highlights={highlights}
-                onScrollChange={() => {}}
-                scrollRef={(scrollTo) => {}}
-                onSelectionFinished={() => {}}
-                highlightTransform={highlightTransform}
+        <div 
+          className="w-full flex justify-center p-4 h-full"
+          style={{
+            height: 'calc(100vh - 140px)'
+          }}
+        >
+          {pdfUrl ? (
+            <div className="relative w-full h-full">
+              <iframe
+                src={`${pdfUrl}#view=FitH`}
+                className="w-full h-full border-none bg-white shadow-lg"
+                title={title || "PDF Viewer"}
+                style={{ height: '100%' }}
               />
-            )}
-          </PdfLoader>
-        ) : (
-          <div>Could not load PDF</div>
-        )}
+              {/* Note: The text highlighting would require a PDF.js implementation for actual text selection */}
+              {/* This is a simplified approach to demonstrate the UI */}
+            </div>
+          ) : (
+            <div>Could not load PDF</div>
+          )}
+        </div>
         
         {/* Quiz Button */}
         <button
@@ -211,10 +168,3 @@ export default function PDFViewer({
     </div>
   );
 };
-
-// Example HighlightPopup component
-const HighlightPopup = ({ comment }: IHighlight) => (
-  <div className="Highlight__popup">
-    {comment.text}
-  </div>
-);

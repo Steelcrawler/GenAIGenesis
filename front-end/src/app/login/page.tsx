@@ -19,30 +19,22 @@ export default function LoginPage() {
       setError('Please fill in all fields');
       return;
     }
-
-    if (email === "test@example.com" && password === "123") {
-      router.push("/courses");
-    } else {
-      setError('Incorrect email or password');
-    }
-    return;
     
     setIsLoading(true);
     setError('');
     
     try {
-      // This is where you would connect to your authentication API
-      // For example with an API route:
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password }),
-      // });
+       const response = await fetch('http://localhost:8000/api/login/', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         credentials: 'include',
+         body: JSON.stringify({ email, password }),
+       });
       
-      // if (!response.ok) {
-      //   const data = await response.json();
-      //   throw new Error(data.message || 'Login failed');
-      // }
+       if (!response.ok) {
+         const data = await response.json();
+         throw new Error(data.message || 'Email or password is incorrect');
+       }
       
       // Redirecting after successful login
       // localStorage.setItem('isLoggedIn', 'true');
@@ -51,7 +43,7 @@ export default function LoginPage() {
       // For demonstration, just simulate a successful login after a delay
       setTimeout(() => {
         console.log('Logged in with:', { email, password });
-        router.push('/');
+        router.push('/courses');
       }, 1000);
       
     } catch (err: any) {

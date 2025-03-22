@@ -67,18 +67,17 @@ export default function SignupPage() {
     setError('');
     
     try {
-      // This is where you would connect to your authentication API
-      // For example with an API route:
-      // const response = await fetch('/api/auth/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name, email, password }),
-      // });
+      const response = await fetch('http://localhost:8000/api/signup/', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         credentials: 'include',
+         body: JSON.stringify({ username: name, email, password }),
+       });
       
-      // if (!response.ok) {
-      //   const data = await response.json();
-      //   throw new Error(data.message || 'Signup failed');
-      // }
+       if (!response.ok) {
+         const data = await response.json();
+         throw new Error(data.message || 'Signup failed');
+      }
       
       // Redirecting after successful signup
       // localStorage.setItem('isLoggedIn', 'true');

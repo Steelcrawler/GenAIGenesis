@@ -1,3 +1,4 @@
+import json
 import random
 from rest_framework import viewsets
 from ..models.class_material import ClassMaterial
@@ -9,6 +10,7 @@ from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
+from vertexai.preview.generative_models import GenerativeModel
 from django.db import transaction
         
 from django.utils import timezone
@@ -16,9 +18,10 @@ from django.shortcuts import get_object_or_404
 
 from ..models.course import Course
 from ..models.subject import Subject
-from ..models.question import Question
+from ..models.question import Question, QuestionType
 from ..models.material_snippet import MaterialSnippet
 from ..serializers.course_serializer import CourseSerializer
+from ..serializers.question_serializer import QuestionSerializer
 from ..serializers.quiz_serializer import QuizSerializer
 from ..models.quiz import Quiz
 from ..models.material_snippet import MaterialSnippet
@@ -96,6 +99,55 @@ class QuizViewSet(viewsets.ModelViewSet):
             weights=[wt for snip, wt in weighted_snippets],
             k=new_quiz.quiz_length
         )
+        
+        data_list = []
+        counter = 0
+        for snippet in selected_snippets:
+            counter+=1
+            data_list.append({
+                'id' : snippet.id,
+                'snippet' : snippet.snippet,
+                'commented_count_helper': counter,
+            })
+        
+        quiz_maker_rag = QuizMakerRAG()
+        corpus_name = quiz_maker_rag.setup_corpus(
+            bucket_name="educatorgenai",
+            data_list=data_list
+        )
+        model: GenerativeModel = quiz_maker_rag.setup_model(corpus_name=corpus_name)
+        model_response = quiz_maker_rag.generate_response(
+            query="",
+            model=model,
+            quiz_length=len(selected_snippets)
+        )
+        try:
+            parsed_model_response = json.loads(model_response)
+        except Exception as e:
+            return Response(
+                {
+                    'error' : f'Parse error of generative models response: {e}'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        for question_raw in parsed_model_response:
+            new_question = Question.objects.create(
+                quiz_id=new_quiz.id,
+                question=question_raw['question'],
+                choices=';;/;;'.join(question_raw['choices']),
+                type=QuestionType.MULTIPLE_CHOICE.value, # Hard-coded for now.
+                single_correct_choice=question_raw['answer_index'],
+                snippet_id=question_raw['snippet_id'],
+            )
+            
+        final_questions = Question.objects.filter(quiz=new_quiz)
+        
+        return Response({
+            'quiz' : QuizSerializer(new_quiz).data,
+            'questions' : QuestionSerializer(final_questions, many=True)
+        },
+                        status=status.HTTP_201_CREATED)
+        
         
         
         

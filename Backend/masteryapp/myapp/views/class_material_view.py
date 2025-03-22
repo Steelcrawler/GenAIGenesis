@@ -1,12 +1,11 @@
 from rest_framework import viewsets
 
-from masteryapp.myapp.serializers.material_snippet_serializer import MaterialSnippetSerializer
-from masteryapp.myapp.serializers.subject_serializer import SubjectSerializer
+from ..serializers.class_material_serializer import ClassMaterialSerializer
+from ..serializers.subject_serializer import SubjectSerializer
 from ..models.class_material import ClassMaterial
 from ..serializers.class_material_serializer import ClassMaterialSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-import requests
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny

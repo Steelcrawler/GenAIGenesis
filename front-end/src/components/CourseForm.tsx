@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
-import { useCourses, Course, CourseFile } from "@/context/CourseContext";
+import { useCourses, Course, ClassMaterial } from "@/context/CourseContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,13 +15,13 @@ import { ArrowLeft, Save } from "lucide-react";
 const formSchema = z.object({
   name: z.string().min(1, "Course name is required"),
   description: z.string().min(1, "Description is required"),
-  imageUrl: z.string().optional(),
-  files: z
+  material: z
     .array(
       z.object({
         id: z.string(),
-        fileName: z.string(),
-        dataUrl: z.string(),
+        file_name: z.string(),
+        local_file: z.instanceof(File),
+        course: z.string().default(""),
       })
     )
     .optional(),
@@ -41,8 +41,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
   const [formData, setFormData] = useState<Partial<Course>>({
     name: existingCourse?.name || "",
     description: existingCourse?.description || "",
-    imageUrl: existingCourse?.imageUrl || "",
-    files: existingCourse?.files || [],
+    material: existingCourse?.material || [],
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -66,10 +65,11 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     try {
       const filePromises = filesArray.map(async (file) => {
         const dataUrl = await fileToBase64(file);
-        const courseFile: CourseFile = {
+        const courseFile: ClassMaterial = {
           id: uuidv4(),
-          fileName: file.name,
-          dataUrl,
+          file_name: file.name,
+          local_file: file,
+          course: courseId || "", 
         };
         return courseFile;
       });
@@ -78,7 +78,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
 
       setFormData((prev) => ({
         ...prev,
-        files: [...(prev.files || []), ...uploadedFiles],
+        material: [...(prev.material || []), ...uploadedFiles],
       }));
     } catch (err) {
       console.error("Error converting file:", err);
@@ -89,7 +89,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
   const handleRemoveFile = (fileId: string) => {
     setFormData((prev) => ({
       ...prev,
-      files: prev.files?.filter((f) => f.id !== fileId) ?? [],
+      material: prev.material?.filter((f) => f.id !== fileId) ?? [],
     }));
   };
 
@@ -116,16 +116,13 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
       const validatedData = formSchema.parse(formData);
 
       if (isEditing && courseId) {
-        updateCourse(courseId, validatedData);
+        await updateCourse(courseId, validatedData);
         toast.success("Course updated successfully");
-      } else {
-        addCourse(validatedData as Omit<Course, "id" | "createdAt" | "updatedAt">);
-        toast.success("Course created successfully");
-      }
-
-      if (isEditing && courseId) {
         router.push(`/course/${courseId}`);
-      } else {
+      }
+      else {
+        await addCourse(validatedData as Omit<Course, "id" | "created_at">);
+        toast.success("Course created successfully");
         router.push("/courses");
       }
     } catch (error) {
@@ -149,8 +146,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      
-      <Button variant="ghost" className="mb-6 gap-2 cursor-pointer" onClick={() => router.push('/courses')}>
+      <Button variant="ghost" className="mb-6 gap-2" onClick={() => router.push("/courses")}>
         <ArrowLeft className="h-4 w-4" />
         <span>Back</span>
       </Button>
@@ -203,15 +199,15 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
               <p className="text-sm text-destructive">{errors.files}</p>
             )}
 
-            {formData.files && formData.files.length > 0 && (
+            {formData.material && formData.material.length > 0 && (
               <ul className="mt-4 space-y-1 text-sm">
-                {formData.files.map((file) => (
+                {formData.material.map((file) => (
                   <li key={file.id} className="flex items-center gap-2">
-                    • {file.fileName}
+                    • {file.file_name}
                     <button
                       type="button"
-                      onClick={() => handleRemoveFile(file.id)}
-                      className="text-destructive text-xs hover:underline cursor-pointer"
+                      onClick={() => handleRemoveFile(file.id!)}
+                      className="text-destructive text-xs hover:underline"
                     >
                       Remove
                     </button>
@@ -222,7 +218,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting} className="gap-2 cursor-pointer">
+            <Button type="submit" disabled={isSubmitting} className="gap-2">
               <Save className="h-4 w-4" />
               <span>{isEditing ? "Update Course" : "Create Course"}</span>
             </Button>

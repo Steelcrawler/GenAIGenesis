@@ -5,6 +5,7 @@ from .quiz import Quiz
 import uuid
 from django.contrib.auth.models import User
 from .subject import Subject
+from .material_snippet import MaterialSnippet
 
 class QuestionType(models.TextChoices):
     SHORT_ANSWER = 'SHORT_ANSWER', 'Short answer'
@@ -13,18 +14,20 @@ class QuestionType(models.TextChoices):
 
 class Question(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    question = models.CharField(max_length=3000)
+    question = models.TextField()
     type = models.CharField(
         max_length=25,
         choices=QuestionType.choices,
     )
-    choices = models.CharField(max_length=10000, null=True) # Separated by ';;/;;' per different question to store as a string.
-    correct_choices = models.CharField(max_length=100, null=True) # The index(es) of the correct answer.
-    correct_short_answer = models.CharField(max_length=3000,null=True)
+    choices = models.TextField() # Separated by ';;/;;' per different question to store as a string.
+    single_correct_choice = models.SmallIntegerField(null=True) # if multiple choice.
+    correct_choices = models.SmallIntegerField(max_length=100, null=True) # The index(es) of the correct answer.
+    correct_short_answer = models.TextField(null=True)
+    attempted_single_choice = models.SmallIntegerField(null=True)
     attempted_choices = models.CharField(max_length=100, null=True)
-    attempted_short_answer = models.CharField(max_length=3000, null=True)
+    attempted_short_answer = models.TextField(null=True)
     is_correct = models.BooleanField(null=True)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    snippet = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True)
+    snippet = models.ForeignKey(MaterialSnippet, on_delete=models.SET_NULL, null=True)
     
     

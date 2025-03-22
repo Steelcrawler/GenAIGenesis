@@ -1,166 +1,245 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
-export type CourseFile = {
-  id: string;
-  fileName: string;
-  dataUrl: string;
-}
+import { useAuth } from '@/context/AuthContext';
 
+export type ClassMaterial = {
+  id?: string;
+  file_name: string;
+  local_file?: File;
+  custom_name?: string;
+  course: string;
+  weight?: number;
+  created_at?: string;
+};
 
 export type Course = {
   id: string;
+  user?: string;
   name: string;
   description: string;
-  imageUrl?: string;
-  files?: CourseFile[];
-  createdAt: Date;
-  updatedAt: Date;
+  icon?: string;
+  image_path?: string;
+  created_at?: string;
+
+  material?: ClassMaterial[];
 };
 
 type CourseContextType = {
   courses: Course[];
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
   filteredCourses: Course[];
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+
   getCourse: (id: string) => Course | undefined;
-  addCourse: (course: Omit<Course, "id" | "createdAt" | "updatedAt">) => void;
-  updateCourse: (
-    id: string,
-    courseData: Partial<Omit<Course, "id" | "createdAt" | "updatedAt">>
-  ) => void;
-  deleteCourse: (id: string) => void;
+  addCourse: (courseData: Omit<Course, "id">) => Promise<Course | null>;
+  updateCourse: (id: string, courseData: Partial<Course>) => Promise<void>;
+  deleteCourse: (id: string) => Promise<void>;
+
+  createMaterial: (materialData: ClassMaterial, courseId: string) => Promise<void>;
 };
 
 const CourseContext = createContext<CourseContextType | undefined>(undefined);
 
-/**
- * Stable "seed" data for initial SSR render
- * (Use consistent IDs to avoid mismatches)
- */
-const initialCourses: Course[] = [
-  {
-    id: "intro-design",
-    name: "Introduction to Design Principles",
-    description:
-      "Learn the foundational principles of design thinking and application.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1516383740770-fbcc5ccbece0?q=80&w=1974&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "js-concepts",
-    name: "Advanced JavaScript Concepts",
-    description:
-      "Dive deep into JavaScript with topics like closures, prototypes, and async programming.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1627398242454-45a1465c2479?q=80&w=2074&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "typography",
-    name: "Mastering Typography",
-    description: "Explore the art and science of typography for digital and print media.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1523726491678-bf852e717f6a?q=80&w=1170&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+async function apiFetch(url: string, options: RequestInit = {}) {
+  const finalOptions: RequestInit = {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  };
+  return fetch(url, finalOptions);
+}
 
-export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({
+export const CourseProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  /**
-   * 1) Initialize state with stable `initialCourses` for SSR.
-   *    This ensures the server always renders the same IDs.
-   */
-  const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const authState = useAuth();
 
-  /**
-   * 2) Once on the client, load from localStorage if available
-   *    and replace the default state.
-   */
   useEffect(() => {
-    const saved = localStorage.getItem("courses");
-    if (saved) {
+    (async () => {
       try {
-        const parsed = JSON.parse(saved) as Course[];
-        setCourses(parsed);
-      } catch {
-        // If parsing fails, just keep initialCourses
+        const res = await apiFetch("http://localhost:8000/api/courses/");
+        if (!res.ok) {
+          console.log("Failed to fetch courses");
+          return;
+        }
+        const data = await res.json();
+        console.log("courses", data);
+        setCourses(Array.isArray(data) ? data : data.courses || []);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
       }
-    }
+    })();
   }, []);
 
-  // Search term for filtering
-  const [searchTerm, setSearchTerm] = useState("");
-
-  /**
-   * 3) Whenever `courses` changes, save to localStorage
-   *    (client-only; won't run on the server).
-   */
-  useEffect(() => {
-    localStorage.setItem("courses", JSON.stringify(courses));
-  }, [courses]);
-
-  // Filter courses based on search term
   const filteredCourses = courses.filter(
-    (course) =>
-      course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (c) =>
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.description.toLowerCase().includes(searchTerm.
+      toLowerCase())
   );
 
-  // Get a single course by ID
-  const getCourse = (id: string) => courses.find((course) => course.id === id);
+  const getCourse = (id: string) => courses.find((c) => c.id === id);
 
-  // Add a new course (generates a UUID only on the client)
-  const addCourse = (
-    courseData: Omit<Course, "id" | "createdAt" | "updatedAt">
-  ) => {
-    const newCourse: Course = {
-      ...courseData,
-      id: uuidv4(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setCourses((prev) => [newCourse, ...prev]);
+
+  const addCourse = async (courseData: Omit<Course, "id">) => {
+    
+    const material = courseData.material;
+    if(authState.userId){
+      courseData = {
+        ...courseData,
+        user: String(authState.userId),
+      };
+    }
+    console.log("courseData", courseData);
+
+    try {
+      const res = await apiFetch("http://localhost:8000/api/courses/", {
+        method: "POST",
+        body: JSON.stringify(courseData),
+      });
+      if (!res.ok) {
+        console.error("Failed to create course");
+        return null;
+      }
+      const data = await res.json();
+      const newCourse: Course = data.course;
+
+      console.log("new course", newCourse);
+      console.log("material", material);
+
+      if (material && material.length > 0) {
+        for (const mat of material) {
+          console.log("creating material", mat);
+
+          await createMaterial(
+            mat,
+            newCourse.id
+          );
+        }
+      }
+
+      setCourses((prev) => [newCourse, ...prev]);
+      return newCourse;
+    } catch (error) {
+      console.error("Error creating course:", error);
+      return null;
+    }
   };
 
-  // Update an existing course
-  const updateCourse = (
-    id: string,
-    partialData: Partial<Omit<Course, "id" | "createdAt" | "updatedAt">>
-  ) => {
-    setCourses((prev) =>
-      prev.map((course) =>
-        course.id === id
-          ? { ...course, ...partialData, updatedAt: new Date() }
-          : course
-      )
-    );
+  const updateCourse = async (id: string, courseData: Partial<Course>) => {
+    const material = courseData.material;
+    try {
+      const res = await apiFetch(`http://localhost:8000/api/courses/${id}/`, {
+        method: "PUT",
+        body: JSON.stringify(courseData),
+      });
+      if (!res.ok) {
+        console.log("Failed to update course");
+        return;
+      }
+      const data = await res.json();
+      console.log("updated course", data);
+      const updated: Course = data.course;
+
+      if (material && material.length > 0) {
+        for (const mat of material) {
+          console.log("creating material", mat);
+
+          await createMaterial(
+            mat,
+            updated.id
+          );
+        }
+      }
+
+      setCourses((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...updated } : c))
+      );
+    } catch (error) {
+      console.error("Error updating course:", error);
+    }
   };
 
-  // Delete a course
-  const deleteCourse = (id: string) => {
-    setCourses((prev) => prev.filter((course) => course.id !== id));
+  const deleteCourse = async (id: string) => {
+    try {
+      const res = await apiFetch(`http://localhost:8000/api/courses/${id}/`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        console.error("Failed to delete course");
+        return;
+      }
+      setCourses((prev) => prev.filter((c) => c.id !== id));
+    } catch (error) {
+      console.error("Error deleting course:", error);
+    }
+  };
+
+  const createMaterial = async (
+    materialData: ClassMaterial, course: string
+  ) => {
+    try {
+      const formData = new FormData();
+      formData.append("material", JSON.stringify(materialData));
+      formData.append("course_id", course);
+      formData.append("file", materialData.local_file!);
+      console.log("creating material", materialData);
+      const res = await fetch("http://localhost:8000/api/materials/", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });      
+      if (!res.ok) {
+        const body = await res.json()
+        console.error("Failed to create material: ", body);	
+        return;
+      }
+      const data = await res.json();
+      const newMaterial: ClassMaterial = data.class_material;
+      const courseId = newMaterial.course;
+
+      setCourses((prev) =>
+        prev.map((course) => {
+          if (course.id === courseId) {
+            const oldMats = course.material || [];
+            return {
+              ...course,
+              material: [...oldMats, newMaterial],
+            };
+          }
+          return course;
+        })
+      );
+    } catch (error) {
+      console.error("Error creating material:", error);
+    }
   };
 
   return (
     <CourseContext.Provider
       value={{
         courses,
+        filteredCourses,
         searchTerm,
         setSearchTerm,
-        filteredCourses,
         getCourse,
         addCourse,
         updateCourse,
         deleteCourse,
+        createMaterial,
       }}
     >
       {children}
@@ -175,27 +254,3 @@ export const useCourses = () => {
   }
   return context;
 };
-
-export const getFile = (fileId: string) => {
-  const { courses } = useCourses();
-  for (const course of courses) {
-    if (course.files && course.files.length > 0) {
-      const foundFile = course.files.find(file => file.id === fileId);
-      if (foundFile) {
-        return foundFile;
-      }
-    }
-  }
-
-  return undefined;
-}
-
-export const getCourseId = (fileId: string) => {
-  const { courses } = useCourses();
-  const course = courses.find(course => course.files && course.files.find((file) => file.id == fileId))
-  if (course) {
-    return course.id;
-  }
-
-  return undefined;
-}

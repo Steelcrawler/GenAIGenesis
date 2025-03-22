@@ -10,8 +10,8 @@ class Course(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     description = models.CharField(max_length=200)
-    icon = models.CharField(max_length=300)
-    image_path = models.CharField(max_length=1000)
+    icon = models.CharField(max_length=300, null=True)
+    image_path = models.CharField(max_length=1000, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     

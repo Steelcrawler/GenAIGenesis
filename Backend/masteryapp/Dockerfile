@@ -19,3 +19,4 @@ WORKDIR /app
 COPY . /app/
 
 RUN pip install --no-cache-dir -r requirements.txt
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/myapp/gcp/genaigenesis-454500-2b74084564ba.json

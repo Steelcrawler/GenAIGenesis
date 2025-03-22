@@ -14,10 +14,8 @@ import uuid
 
 # Define required scopes
 SCOPES = [
-    'https://www.googleapis.com/auth/cloud-platform',
-    'https://www.googleapis.com/auth/devstorage.read_write',
-    'https://www.googleapis.com/auth/cloud-language',
-    'https://www.googleapis.com/auth/cloud-vision'
+    'https://www.googleapis.com/auth/cloud-platform',  # For Vertex AI
+    'https://www.googleapis.com/auth/devstorage.read_write'  # For Cloud Storage
 ]
 
 class QuizMakerRAG:

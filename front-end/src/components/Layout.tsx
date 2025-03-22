@@ -40,7 +40,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <main 
           className={cn(
             "flex-1 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out",
-            isSidebarOpen && !isMobile ? 'calc(100% - 280px)' : '100%'
           )}
         >
           <header className="md:hidden sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b p-4">

@@ -4,3 +4,5 @@ from .course import Course
 from .class_material import ClassMaterial
 from .subject import Subject
 from .material_snippet import MaterialSnippet
+from .question import Question
+from .quiz import Quiz

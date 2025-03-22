@@ -12,53 +12,79 @@ from google.cloud import storage
 from google.auth import default
 import uuid
 
-# Define required scopes
+# Define required scopes for ADC
 SCOPES = [
     'https://www.googleapis.com/auth/cloud-platform',  # For Vertex AI
     'https://www.googleapis.com/auth/devstorage.read_write'  # For Cloud Storage
 ]
 
 class QuizMakerRAG:
-    def __init__(self, credentials_path: Optional[str] = None, debug: bool = False):
-        """Initialize the RAG model"""
+    def __init__(self, service_account_path: Optional[str] = None, debug: bool = False):
+        """Initialize the RAG model with ADC first, then service account as fallback
+        
+        Args:
+            service_account_path: Optional path to service account JSON key file
+            debug: Enable debug logging
+        """
         self.debug = debug
         env_path = './.env'
         load_dotenv(dotenv_path=env_path)
         
-        self.project_id = "genaigenesis-454500" # os.getenv("PROJECT_ID")
+        self.project_id = "genaigenesis-454500"
         self.location = os.getenv("GOOGLE_CLOUD_REGION", "us-central1")
         
         if self.debug:
-            print(f"Initializing RAG model with project_id: {self.project_id}, location: {self.location}")
+            print(f"\nInitializing RAG model with:")
+            print(f"  Project ID: {self.project_id}")
+            print(f"  Location: {self.location}")
+            print(f"  Required scopes: {' '.join(SCOPES)}")
         
-        # Get default credentials with all required scopes
+        # Try ADC first
         try:
-            self.credentials, project = default(scopes=SCOPES)
             if self.debug:
-                print(f"Using default credentials with project: {project}")
-                print(f"Authorized scopes: {' '.join(SCOPES)}")
-        except Exception as e:
-            if self.debug:
-                print(f"Failed to get default credentials: {e}")
-            # Fallback to service account if provided
-            if credentials_path:
-                if self.debug:
-                    print(f"Falling back to service account credentials: {credentials_path}")
-                self.credentials = None
-                self.storage_client = storage.Client.from_service_account_json(credentials_path)
-            else:
-                raise Exception("No credentials available. Error: " + str(e))
-        
-        # Initialize clients with default credentials if available
-        if hasattr(self, 'credentials') and self.credentials:
-            self.storage_client = storage.Client(credentials=self.credentials, project=self.project_id)
+                print("\nAttempting to use Application Default Credentials...")
+            
+            credentials, detected_project = default(scopes=SCOPES)
+            self.storage_client = storage.Client(credentials=credentials, project=self.project_id)
             vertexai.init(
                 project=self.project_id,
                 location=self.location,
-                credentials=self.credentials
+                credentials=credentials
             )
-        else:
-            vertexai.init(project=self.project_id, location=self.location)
+            
+            if self.debug:
+                print("Successfully initialized with Application Default Credentials")
+                print(f"Detected project from ADC: {detected_project}")
+            
+            return
+            
+        except Exception as adc_error:
+            if self.debug:
+                print(f"ADC initialization failed: {str(adc_error)}")
+            
+            # Fall back to service account if provided
+            if service_account_path:
+                if self.debug:
+                    print(f"\nFalling back to service account: {service_account_path}")
+                
+                if not os.path.exists(service_account_path):
+                    raise FileNotFoundError(f"Service account file not found: {service_account_path}")
+                
+                try:
+                    self.storage_client = storage.Client.from_service_account_json(service_account_path)
+                    vertexai.init(
+                        project=self.project_id,
+                        location=self.location,
+                        credentials=self.storage_client.get_credentials()
+                    )
+                    
+                    if self.debug:
+                        print("Successfully initialized with service account")
+                    
+                except Exception as sa_error:
+                    raise Exception(f"Service account initialization failed: {str(sa_error)}")
+            else:
+                raise Exception(f"No valid credentials available. ADC failed and no service account provided. Error: {str(adc_error)}")
 
     def list_gcs_files(self, bucket_name: str, prefix: str = "") -> List[str]:
         """List all files in a GCS bucket with given prefix"""
@@ -330,15 +356,18 @@ def select_files(files: List[str]) -> List[str]:
             print("Invalid selection. Please try again.")
 
 def main():
-    debug_mode = True  # Set debug mode to True
+    debug_mode = True
+    service_account = 'genaigenesis-454500-2b74084564ba.json'  # Fallback service account
     
-    # Try to use default credentials first
     try:
-        rag = QuizMakerRAG(debug=debug_mode)
-        print("\nUsing default credentials")
+        # Try to initialize with ADC first, service account as fallback
+        rag = QuizMakerRAG(
+            service_account_path=service_account,
+            debug=debug_mode
+        )
     except Exception as e:
-        print(f"\nFalling back to service account: {e}")
-        rag = QuizMakerRAG(credentials_path='genaigenesis-454500-2b74084564ba.json', debug=debug_mode)
+        print(f"Failed to initialize RAG: {e}")
+        return
 
     bucket_name = "educatorgenai"
     print("\nInitializing QuizMakerRAG with debug mode enabled")

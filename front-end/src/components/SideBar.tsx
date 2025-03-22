@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, FolderOpen, Plus, Search } from "lucide-react";
-import { useCourses } from "@/context/CourseContext";
+import { CourseFile, useCourses } from "@/context/CourseContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -103,15 +103,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
                     {isExpanded && course.files && course.files.length > 0 && (
                       <ul className="ml-6 mt-1 space-y-1 text-sm">
-                        {course.files.map((file) => (
+                        {course.files.map((file: CourseFile) => (
                           <li key={file.id}>
-                            <a
-                              href={file.dataUrl}
-                              download={file.fileName}
+                            <Link 
+                              href={`/file/${file.id}`}
                               className="text-foreground hover:underline"
                             >
                               {file.fileName}
-                            </a>
+                            </Link>
                           </li>
                         ))}
                       </ul>

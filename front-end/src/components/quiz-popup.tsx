@@ -1,23 +1,27 @@
 import React, { useState } from 'react';
 
-interface OptionObject {
+interface pdfObject {
   label: string;
-  value: number;
+  id: string;
+}
+
+export interface courseObject {
+  label: string;
+  id: string;
+  pdfs: pdfObject[]
 }
 
 interface QuizPopupProps {
   handleCancel: () => void;
-  courseOptions: OptionObject[];
-  pdfOptions: OptionObject[];
+  courses: courseObject[];
 }
 
-
-export default function QuizPopup({ handleCancel, courseOptions, pdfOptions } : QuizPopupProps ) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+export default function QuizPopup({ handleCancel, courses: courseOptions } : QuizPopupProps ) {
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string>('');
 
   const handleSubmit = () => {
-    if (!selectedCategory || !selectedOption) {
+    if (!selectedCourse || !selectedOption) {
       alert('Please select both a category and the material before submitting.');
       return;
     }
@@ -32,38 +36,29 @@ export default function QuizPopup({ handleCancel, courseOptions, pdfOptions } : 
           onClick={() => handleCancel()}
         ></div>
         
-        {/* Modal content */}
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full z-10">
-          <h2 className="text-xl font-bold mb-4">Select Quiz Category</h2>
+          <h2 className="text-xl font-bold mb-4">Select Course</h2>
           
-          {/* Options selection */}
+          {/* Course dropdown */}
           <div className="mb-6">
-            <p className="font-medium mb-2">Please select one quiz category:</p>
+            <p className="font-medium mb-2">Please select a course:</p>
             <div className="flex space-x-4">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="quizOption" 
-                  checked={selectedCategory === 'course'}
-                  onChange={() => setSelectedCategory('course')}
-                  className="h-4 w-4 text-blue-600"
-                />
-                <span>Course</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="quizOption" 
-                  checked={selectedCategory === 'pdf'}
-                  onChange={() => setSelectedCategory('pdf')}
-                  className="h-4 w-4 text-blue-600"
-                />
-                <span>PDF</span>
-              </label>
+              <select 
+                value={selectedCourse || ''} 
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Select a course --</option>
+                {courseOptions && courseOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           
-          {/* Class dropdown */}
+          {/* Document dropdown */}
           <div className="mb-6">
             <label className="block font-medium mb-2">Select your material:</label>
             <select 
@@ -71,14 +66,9 @@ export default function QuizPopup({ handleCancel, courseOptions, pdfOptions } : 
               onChange={(e) => setSelectedOption(e.target.value)}
               className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">-- Select a class --</option>
-              {pdfOptions && selectedCategory === "pdf" && pdfOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-              {courseOptions && selectedCategory === "course" && courseOptions.map((option) => (
-                <option key={option.value} value={option.value}>
+              <option value="all">All course documents</option>
+              {selectedCourse && courseOptions && courseOptions.filter((option) => option.id === selectedCourse)[0].pdfs?.map((option) => (
+                <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
               ))}

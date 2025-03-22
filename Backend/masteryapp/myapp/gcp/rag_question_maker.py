@@ -9,6 +9,8 @@ from pathlib import Path
 import json
 import time
 from google.cloud import storage
+import uuid
+
 
 class QuizMakerRAG:
     def __init__(self, credentials_path: Optional[str] = None, debug: bool = False):
@@ -65,10 +67,23 @@ class QuizMakerRAG:
             with open(file_path, 'w') as f:
                 json.dump(data_list, f)
                 
+            if self.debug:
+                with open(file_path, 'r') as f:
+                    file_content = f.read()
+                    print(f"Debug: File content of {file_path}:\n{file_content}")
+                
             rag.upload_file(
                 corpus_name=corpus.name,
                 path=file_path,
             )
+            
+            try:
+                os.remove(file_path)
+                if self.debug:
+                    print(f"Debug: Deleted temporary file: {file_path}")
+            except Exception as e:
+                if self.debug:
+                    print(f"Warning: Could not delete temporary file {file_path}. Error: {e}")
 
             
             # List files to verify import
@@ -199,19 +214,59 @@ def main():
 
     bucket_name = "educatorgenai"
     print("\nFetching available files from GCS bucket...")
-    available_files = rag.list_gcs_files(bucket_name)
-    
-    if not available_files:
-        print("No files found in the bucket.")
-        return
-    
-    selected_files = select_files(available_files)
-    
-    if not selected_files:
-        print("No files selected.")
-        return
-    
-    corpus_id = rag.setup_corpus(bucket_name, selected_files)
+    mock_data = [
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "The evolution of technology has dramatically reshaped how we interact with the world.",
+            "comment_helper_counter": 1,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Artificial Intelligence is rapidly advancing, opening up new opportunities across various sectors.",
+            "comment_helper_counter": 2,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Renewable energy solutions are becoming essential as the world shifts towards sustainability.",
+            "comment_helper_counter": 3,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Space exploration is taking a leap forward with commercial ventures leading the charge.",
+            "comment_helper_counter": 4,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "The digital economy is transforming traditional business models across the globe.",
+            "comment_helper_counter": 5,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Healthcare innovations, especially in biotechnology, are significantly improving patient care.",
+            "comment_helper_counter": 6,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Data privacy remains a critical concern as more personal information is shared online.",
+            "comment_helper_counter": 7,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Environmental conservation efforts are increasingly crucial to combat climate change.",
+            "comment_helper_counter": 8,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Advancements in education technology are reshaping how students learn and teachers instruct.",
+            "comment_helper_counter": 9,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "snippet": "Remote work and digital communication tools are defining the future of the workplace.",
+            "comment_helper_counter": 10,
+        }
+    ]
+    corpus_id = rag.setup_corpus(bucket_name=bucket_name, data_list=mock_data)
 
     if corpus_id:
         if debug_mode:

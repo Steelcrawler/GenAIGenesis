@@ -175,3 +175,27 @@ export const useCourses = () => {
   }
   return context;
 };
+
+export const getFile = (fileId: string) => {
+  const { courses } = useCourses();
+  for (const course of courses) {
+    if (course.files && course.files.length > 0) {
+      const foundFile = course.files.find(file => file.id === fileId);
+      if (foundFile) {
+        return foundFile;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export const getCourseId = (fileId: string) => {
+  const { courses } = useCourses();
+  const course = courses.find(course => course.files && course.files.find((file) => file.id == fileId))
+  if (course) {
+    return course.id;
+  }
+
+  return undefined;
+}

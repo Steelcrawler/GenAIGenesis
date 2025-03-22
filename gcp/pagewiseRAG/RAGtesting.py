@@ -3,9 +3,11 @@ from typing import Optional, List
 from dotenv import load_dotenv
 import vertexai
 from vertexai.preview import rag
+from vertexai.preview.rag import RagCorpus
 from vertexai.preview.generative_models import GenerativeModel, Tool
 from pathlib import Path
 import json
+import time
 from google.cloud import storage
 
 class SimpleRAG:
@@ -36,7 +38,7 @@ class SimpleRAG:
             print(f"Error listing GCS files: {str(e)}")
             return []
 
-    def setup_corpus(self, bucket_name: str, selected_files: List[str]) -> Optional[str]:
+    def setup_corpus(self, bucket_name: str, selected_files = None, custom_data = None) -> Optional[str]:
         """Set up the RAG corpus from selected files in GCS bucket"""
         try:
             if self.debug:
@@ -60,11 +62,23 @@ class SimpleRAG:
             if self.debug:
                 print(f"Importing files from paths: {paths}")
             
-            rag.import_files(
-                corpus.name,
-                paths,
-                max_embedding_requests_per_min=1000
-            )
+            if selected_files:
+                rag.import_files(
+                    corpus.name,
+                    paths,
+                    max_embedding_requests_per_min=1000
+                )
+            elif custom_data:
+                timestamp = int(time.time())
+                file_path = 'temp_file_{timestamp}'
+                with open(file_path, 'w') as f:
+                    json.dump(custom_data, f)
+                rag.upload_file(
+                    corpus_name=corpus.name,
+                    path=file_path,
+                )
+            else:
+                raise Exception('One of selected_files or custom_data must not be None')
             
             # List files to verify import
             files = rag.list_files(corpus.name)

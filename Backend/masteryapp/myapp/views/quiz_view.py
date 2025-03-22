@@ -27,7 +27,6 @@ from ..models.material_snippet import MaterialSnippet
 
 from io import BytesIO
 from pdfminer.high_level import extract_text
-import random
 
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()

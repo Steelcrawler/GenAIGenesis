@@ -16,5 +16,6 @@ class ClassMaterial(models.Model):
         choices=[(i, str(i)) for i in range(20)],
         null=True
     )
+    created_at = models.DateTimeField(auto_now_add=True)
     
     

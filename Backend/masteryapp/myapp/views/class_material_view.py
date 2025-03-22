@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from .....gcp.uploadpdf import upload_and_process_pdf
+from ...gcp.uploadpdf import upload_and_process_pdf
 from ..models.course import Course
 from ..models.subject import Subject
 from ..models.material_snippet import MaterialSnippet

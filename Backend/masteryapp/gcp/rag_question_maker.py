@@ -114,7 +114,7 @@ class QuizMakerRAG:
 
             prompt = f"""
             You have in your data a JSON file which contains a list of subjects. Go through each entry one by one and create
-            one and exactly one question for each. The questions must be in mutliple choice (4) format, with exactly one correct answer.
+            one and exactly one question for each ({quiz_length} total questions expected). The questions must be in mutliple choice (4) format, with exactly one correct answer.
             You may see the same subject appear twice, or even the same exact object appear twice. If so, make another question for the same
             snippet/subject. The important part is that you make exactly one question per ENTRY (unique identifier).
             

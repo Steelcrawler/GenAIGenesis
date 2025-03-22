@@ -1,7 +1,5 @@
+import random
 from rest_framework import viewsets
-
-from masteryapp.myapp.serializers.material_snippet_serializer import MaterialSnippetSerializer
-from masteryapp.myapp.serializers.subject_serializer import SubjectSerializer
 from ..models.class_material import ClassMaterial
 from ..serializers.class_material_serializer import ClassMaterialSerializer
 from rest_framework.response import Response
@@ -27,6 +25,7 @@ from ..models.material_snippet import MaterialSnippet
 
 from io import BytesIO
 from pdfminer.high_level import extract_text
+from ...gcp.rag_question_maker import QuizMakerRAG
 
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
@@ -97,6 +96,8 @@ class QuizViewSet(viewsets.ModelViewSet):
             weights=[wt for snip, wt in weighted_snippets],
             k=new_quiz.quiz_length
         )
+        
+        
         
         
         

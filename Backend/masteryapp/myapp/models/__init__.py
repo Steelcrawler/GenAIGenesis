@@ -2,5 +2,5 @@
 #from .semester import Semester
 from .course import Course
 from .class_material import ClassMaterial
-from .subcategory import Subcategory
-from .material_cut import MaterialCut
+from .subject import Subject
+from .material_snippet import MaterialSnippet

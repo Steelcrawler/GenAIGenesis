@@ -6,7 +6,8 @@ import uuid
 
 class ClassMaterial(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    file_name = models.CharField(max_length=500)
+    file_name = models.CharField(max_length=1000)
+    custom_name = models.CharField(max_length=500, null=True)
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,

@@ -51,7 +51,7 @@ class PDFProcessor:
             raise
         
         # Initialize the generative model for subject extraction
-        self.model = GenerativeModel(model_name="gemini-1.5-flash-001")
+        self.model = GenerativeModel(model_name="gemini-1.5-flash-002")
 
     def get_pdf_from_bucket(self, bucket_name: str, user_id: str, course_id: str, file_name: str) -> Optional[io.BytesIO]:
         """Get a PDF from GCS bucket as a BytesIO object without downloading to disk

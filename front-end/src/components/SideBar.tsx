@@ -153,7 +153,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
                       {/* Upload icon + hidden input */}
                       <label className="cursor-pointer">
-                        <Upload className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                        <Plus className="h-4 w-4 text-muted-foreground hover:text-primary" />
                         <input
                           type="file"
                           hidden

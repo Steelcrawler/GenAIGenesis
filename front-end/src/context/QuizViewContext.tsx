@@ -105,7 +105,6 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
           choices: question.choices.split(';;/;;')
         })
       });
-      console.log(questions)
       updateQuestions(questions);
       setCurrentQuiz(newQuiz);
 
@@ -123,8 +122,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
       const finalData = authState.userId
         ? { questions: [...responses] }
         : responses;
+      console.log(responses)
         
-      console.log(finalData)
       const { data } = await apiService.patch(`${API_URL}/quizzes/${id}/submit/`, finalData);
       const updatedQuiz: Quiz = data.quiz;
       const questions = data.questions.map((question: FakeQuestion) => {

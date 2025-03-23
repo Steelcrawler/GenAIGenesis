@@ -7,16 +7,14 @@ import { cn } from '@/lib/utils';
 
 interface QuizQuestionProps {
   question: Question;
-  onAnswerSubmit: () => void;
+  onAnswerSubmit: (index: number) => void;
   showFeedback?: boolean;
-  setSelectedIndex: (idx: number) => void;
 }
 
 const QuizQuestion: React.FC<QuizQuestionProps> = ({ 
   question, 
   onAnswerSubmit,
   showFeedback = false,
-  setSelectedIndex
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [correctOption, setCorrectOption] = useState<string | null>(null);
@@ -40,11 +38,10 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     
     setIsSubmitted(true);
     const index = question.choices.indexOf(selectedOption);
-    setSelectedIndex(index);
     
     // Wait for animation if showing feedback
     setTimeout(() => {
-      onAnswerSubmit();
+      onAnswerSubmit(index);
     }, showFeedback ? 1000 : 0);
     setIsSubmitted(false)
   };

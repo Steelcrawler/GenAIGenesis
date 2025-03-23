@@ -36,25 +36,21 @@ class QuizViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     
-    def get(self, request, *args, **kwargs):
-        pk = kwargs.get('pk', None)
-        if pk:
-            quiz = get_object_or_404(Quiz, pk=pk)
-            return Response({
-                'quiz' : QuizSerializer(quiz).data
-            },
-                            status=status.HTTP_200_OK)
-            
-        course_id = self.request.query_params.get('course_id')
-        
+    def retrieve(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        quiz = get_object_or_404(Quiz, pk=pk)
+        serializer = self.get_serializer(quiz)
+        return Response({'quiz': serializer.data}, status=status.HTTP_200_OK)
+
+    def list(self, request, *args, **kwargs):
+        course_id = request.query_params.get('course_id')
         if course_id:
             queryset = Quiz.objects.filter(course_id=course_id)
         else:
-            queryset = Quiz.objects.filter(user=self.request.user)
+            queryset = Quiz.objects.filter(user=request.user)
         serializer = self.get_serializer(queryset, many=True)
-        return Response({
-            'quizzes': serializer.data
-        }, status=status.HTTP_200_OK)
+        return Response({'quizzes': serializer.data}, status=status.HTTP_200_OK)
+
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):

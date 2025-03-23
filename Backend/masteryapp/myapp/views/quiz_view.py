@@ -1,6 +1,8 @@
 import json
 import random
 from rest_framework import viewsets
+
+from myapp.auth_backends import CsrfExemptSessionAuthentication
 from ..models.class_material import ClassMaterial
 from ..serializers.class_material_serializer import ClassMaterialSerializer
 from rest_framework.response import Response
@@ -24,6 +26,7 @@ from ..serializers.course_serializer import CourseSerializer
 from ..serializers.question_serializer import QuestionSerializer
 from ..serializers.quiz_serializer import QuizSerializer
 from ..models.quiz import Quiz
+from rest_framework.authentication import BasicAuthentication
 from ..models.material_snippet import MaterialSnippet
 
 from io import BytesIO
@@ -33,6 +36,7 @@ from ..gcp.rag_question_maker import QuizMakerRAG
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
+    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
     
     

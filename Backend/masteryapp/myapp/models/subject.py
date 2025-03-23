@@ -12,6 +12,7 @@ class Subject(models.Model):
         on_delete=models.CASCADE,
         related_name="subjects"
     )
+    mastery = models.SmallIntegerField()
     
     
     

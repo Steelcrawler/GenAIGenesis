@@ -116,25 +116,45 @@ def text_to_speech_bytes(text, voice_name="en-US-Standard-C",
 if __name__ == "__main__":
     # Method 1: Using environment variable (recommended approach)
     # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "path/to/your/credentials.json"
+    test_transcripts = [
+        "Go to the next page",
+        "Let's go back to the previous slide",
+        "Submit my answers now",
+        "I want to quit the application",
+        "Can you reread that for me?",
+        "Open the Introduction to Computer Science course",
+        "Open Machine Learning PDF Neural Networks Explained",
+        "Open the Data Structures course and the Lecture 2 document"
+    ]
+
+    for transcript in test_transcripts:
+        text_to_speech(
+            transcript,
+            output_filename=f"{transcript}.wav",
+            voice_name="en-US-Neural2-F",
+            speaking_rate=1.0,
+            credentials_file="genaigenesis-454500-2b74084564ba.json"
+        )
+
+
+    # # Example 1: Save to file using default credentials
+    # text_to_speech(
+    #     "Hello, this is a test of Google Cloud Platform's text to speech API.",
+    #     output_filename="test_output.wav",
+    #     voice_name="en-US-Neural2-F",  # Using a neural voice
+    #     speaking_rate=1.0,
+    #     credentials_file="genaigenesis-454500-2b74084564ba.json"
+    # )
     
-    # Example 1: Save to file using default credentials
-    text_to_speech(
-        "Hello, this is a test of Google Cloud Platform's text to speech API.",
-        output_filename="test_output.wav",
-        voice_name="en-US-Neural2-F",  # Using a neural voice
-        speaking_rate=1.0,
-        credentials_file="genaigenesis-454500-2b74084564ba.json"
-    )
-    
-    # Example 2: Get audio bytes using default credentials
-    audio_bytes = text_to_speech_bytes(
-        "This is another example that returns the audio as bytes.",
-        voice_name="en-US-Neural2-F", 
-        credentials_file="genaigenesis-454500-2b74084564ba.json"
-    )
+    # # Example 2: Get audio bytes using default credentials
+    # audio_bytes = text_to_speech_bytes(
+    #     "This is another example that returns the audio as bytes.",
+    #     voice_name="en-US-Neural2-F", 
+    #     credentials_file="genaigenesis-454500-2b74084564ba.json"
+    # )
     
     
     # You could save the bytes to a file
-    if audio_bytes:
-        with open("example_bytes.wav", "wb") as f:
-            f.write(audio_bytes)
+    # if audio_bytes:
+    #     with open("example_bytes.wav", "wb") as f:
+    #         f.write(audio_bytes)

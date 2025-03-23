@@ -18,5 +18,5 @@ class Quiz(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     optimize_learning = models.BooleanField(default=True)
     quiz_length = models.SmallIntegerField(default=20)
-    options_per_question = models.SmallIntegerField(defaut=4)
+    options_per_question = models.SmallIntegerField(default=4)
     

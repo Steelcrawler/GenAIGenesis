@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_name: str, 
-                       credentials_path: Optional[str] = None) -> Dict[str, Any]:
+                       credentials_path: Optional[str] = None, existing_subjects: List[str] = None) -> Dict[str, Any]:
     """Process a PDF file to create a JSON file with extracted subjects and text
     
     Args:
@@ -47,11 +47,11 @@ def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_nam
                 "error": error_msg
             }
             
-        processor = PDFProcessor(debug=True, user_id=user_id, course_id=course_id, file_name=file_name, credentials_path=credentials_path)
+        processor = PDFProcessor(debug=True, credentials_path=credentials_path)
         # Update the processor to accept separate parameters if needed
         # For now, we'll pass the combined path if that's what the processor expects
         blob_path = f"{user_id}/{course_id}/{file_name}"
-        results = processor.process_pdf(bucket_name, blob_path)
+        results = processor.process_pdf(bucket_name, user_id, course_id, file_name, existing_subjects=[])
         logger.info(f"JSON file created in gs://{bucket_name}/{user_id}/{course_id}/{file_name.rsplit('.', 1)[0]}.json")
         return results
     
@@ -69,7 +69,7 @@ def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_nam
 
 
 def upload_and_process_pdf(file_obj, bucket_name: str, user_id: str, course_id: str, file_name: str,
-                        credentials_path: Optional[str] = None) -> Dict[str, Any]:
+                        credentials_path: Optional[str] = None, existing_subjects: List[str] = None) -> Dict[str, Any]:
     """End-to-end pipeline to upload a Django file object to GCS and process it
     
     Args:
@@ -135,7 +135,7 @@ def upload_and_process_pdf(file_obj, bucket_name: str, user_id: str, course_id: 
         }
     
     # 3. Process the PDF and create JSON
-    results = process_pdf_to_json(bucket_name, user_id, course_id, file_name, credentials_path)
+    results = process_pdf_to_json(bucket_name, user_id, course_id, file_name, credentials_path, existing_subjects)
     
     # Ensure all required fields are present in the results
     if not results.get("pdf_name"):
@@ -171,7 +171,7 @@ def upload_process_and_highlight_pdf(file_obj, bucket_name: str, user_id: str, c
             }
         
         # 2. Process the PDF and create JSON
-        results = process_pdf_to_json(bucket_name, user_id, course_id, file_name, credentials_path)
+        results = process_pdf_to_json(bucket_name, user_id, course_id, file_name, credentials_path, existing_subjects=[])
         
         # 3. Highlight the PDF - passing individual parameters instead of path
         highlight_results = process_pdf_with_subjects(

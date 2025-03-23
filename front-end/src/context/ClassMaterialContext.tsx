@@ -1,184 +1,158 @@
-  
-  import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-  import { useAuth } from '@/context/AuthContext';
-  import { ClassMaterial } from '@/types/classMaterial';
-  
-  interface ClassMaterialContextType {
-    materials: ClassMaterial[];
-    courseId: string;
-    setCourseId: (value: string) => void;
 
-    addMaterial: (material: Omit<ClassMaterial, 'id' | 'created_at'>) => Promise<ClassMaterial>;
-    updateMaterial: (id: string, material: Partial<ClassMaterial>) => Promise<ClassMaterial>;
-    deleteMaterial: (id: string) => Promise<void>;
-    getMaterialById: (id: string) => ClassMaterial | undefined;
-  }
-  
-  const ClassMaterialContext = createContext<ClassMaterialContextType | undefined>(undefined);
-  
-  interface ClassMaterialProviderProps {
-    children: ReactNode;
-    apiUrl?: string;
-  }
+"use client";
 
-  async function apiFetch(url: string, options: RequestInit = {}) {
-    const finalOptions: RequestInit = {
-      ...options,
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
-    };
-    return fetch(url, finalOptions);
-  }
-  
-  export const ClassMaterialProvider: React.FC<ClassMaterialProviderProps> = ({ 
-    children, 
-    apiUrl = 'http://localhost:8000/api/' 
-  }) => {
-    const [materials, setMaterials] = useState<ClassMaterial[]>([]);
-    const [courseId, setCourseId] = useState("");
-    const authState = useAuth();
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
-    useEffect(() => {
-        (async () => {
-          try {
-            const res = await apiFetch(`${apiUrl}materials/`);
-            if (!res.ok) {
-              console.log("Failed to fetch course materials");
-              return;
-            }
-            const data = await res.json();
-            console.log("course materials", data);
-            setMaterials(Array.isArray(data) ? data : data.courses || []);
-          } catch (error) {
-            console.error("Error fetching course materials:", error);
-          }
-        })();
-      }, []);
+import { apiService } from '@/services/api';
 
-        
-        const material = courseData.material;
-        if(authState.userId){
-          courseData = {
-            ...courseData,
-            user: String(authState.userId),
-          };
-        }
-        console.log("courseData", courseData);
-    
-        try {
-          const res = await apiFetch("http://localhost:8000/api/courses/", {
-            method: "POST",
-            body: JSON.stringify(courseData),
-          });
-          if (!res.ok) {
-            console.error("Failed to create course");
-            return null;
-          }
-          const data = await res.json();
-          const newCourse: Course = data.course;
-    
-          console.log("new course", newCourse);
-          console.log("material", material);
-    
-          if (material && material.length > 0) {
-            for (const mat of material) {
-              console.log("creating material", mat);
-    
-              await createMaterial(
-                mat,
-                newCourse.id
-              );
-            }
-          }
-    
-          setCourses((prev) => [newCourse, ...prev]);
-          return newCourse;
-        } catch (error) {
-          console.error("Error creating course:", error);
-          return null;
-        }
-    };
+const API_URL = "http://localhost:8000/api";
 
-    const addMaterial = async (material: Omit<ClassMaterial, 'id' | 'created_at'>): Promise<ClassMaterial> => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await axios.post(apiUrl, material);
-        const newMaterial = response.data;
-        setMaterials(prev => [...prev, newMaterial]);
-        return newMaterial;
-      } catch (err) {
-        setError('Failed to add class material');
-        console.error('Error adding material:', err);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    };
+export type ClassMaterial = {
+  id?: string;
+  file_name: string;
+  local_file?: File;
+  custom_name?: string;
+  course: string;
+  weight?: number;
+  created_at?: string;
+};
+
+type MaterialContextType = {
+  materials: ClassMaterial[];
+  searchTerm: string;
+  loading: boolean;
+  error: string | null;
   
-    const updateMaterial = async (id: string, material: Partial<ClassMaterial>): Promise<ClassMaterial> => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await axios.patch(`${apiUrl}/${id}`, material);
-        const updatedMaterial = response.data;
-        setMaterials(prev => 
-          prev.map(item => item.id === id ? updatedMaterial : item)
-        );
-        return updatedMaterial;
-      } catch (err) {
-        setError('Failed to update class material');
-        console.error('Error updating material:', err);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    const deleteMaterial = async (id: string): Promise<void> => {
-      try {
-        setLoading(true);
-        setError(null);
-        await axios.delete(`${apiUrl}/${id}`);
-        setMaterials(prev => prev.filter(item => item.id !== id));
-      } catch (err) {
-        setError('Failed to delete class material');
-        console.error('Error deleting material:', err);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    const getMaterialById = (id: string): ClassMaterial | undefined => {
-      return materials.find(material => material.id === id);
-    };
-  
-    const value = {
-      materials,
-      loading,
-      error,
-      fetchMaterials,
-      addMaterial,
-      updateMaterial,
-      deleteMaterial,
-      getMaterialById
-    };
-  
-    return (
-      <ClassMaterialContext.Provider value={value}>
-        {children}
-      </ClassMaterialContext.Provider>
-    );
-  };
-  
-  export const useClassMaterial = (): ClassMaterialContextType => {
-    const context = useContext(ClassMaterialContext);
-    if (context === undefined) {
-      throw new Error('useClassMaterial must be used within a ClassMaterialProvider');
+  setSearchTerm: (value: string) => void;
+  getMaterial: (id: string) => ClassMaterial | undefined;
+  getMaterialsByCourse: (courseId: string) => ClassMaterial[];
+  createMaterial: (materialData: ClassMaterial, courseId: string) => Promise<ClassMaterial | null>;
+  deleteMaterial: (id: string) => Promise<boolean>;
+  refreshMaterials: () => Promise<void>;
+};
+
+const MaterialContext = createContext<MaterialContextType | undefined>(undefined);
+
+export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?:() => void }> = ({
+  children, onMaterialChange
+}) => {
+  const [materials, setMaterials] = useState<ClassMaterial[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  //const { refreshCourses } = useCourses();
+
+
+  const refreshMaterials = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data } = await apiService.get(`${API_URL}/materials/`);
+      setMaterials(data.materials);
+    } catch (err) {
+      setError("Failed to fetch materials. Please try again.");
+      console.error("Error fetching materials:", err);
+    } finally {
+      setLoading(false);
     }
-    return context;
   };
+
+  useEffect(() => {
+    refreshMaterials();
+  }, []);
+
+  
+
+  const getMaterial = (id: string) => materials.find((m) => m.id === id);
+  
+  const getMaterialsByCourse = (courseId: string) => 
+    materials.filter(m => m.course === courseId);
+
+  const createMaterial = async (
+    materialData: ClassMaterial, courseId: string
+  ): Promise<ClassMaterial | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append("material", JSON.stringify(materialData));
+      formData.append("course_id", courseId);
+      
+      if (materialData.local_file) {
+        formData.append("file", materialData.local_file);
+      }
+      
+      const { data } = await apiService.uploadFile(`${API_URL}/materials/`, formData);
+      const newMaterial: ClassMaterial = data.class_material;
+      
+      setMaterials(prev => [...prev, newMaterial]);
+      
+      //await refreshCourses();
+      
+      return newMaterial;
+    } catch (err) {
+      setError("Failed to create material. Please try again.");
+      console.error("Error creating material:", err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteMaterial = async (id: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await apiService.delete(`${API_URL}/materials/${id}/`);
+      
+      setMaterials(prev => prev.filter(m => m.id !== id));
+      
+      //await refreshCourses();
+      
+      return true;
+    } catch (err) {
+      setError("Failed to delete material. Please try again.");
+      console.error("Error deleting material:", err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <MaterialContext.Provider
+      value={{
+        materials,
+        
+        searchTerm,
+        loading,
+        error,
+        setSearchTerm,
+        getMaterial,
+        getMaterialsByCourse,
+        createMaterial,
+        deleteMaterial,
+        refreshMaterials,
+      }}
+    >
+      {children}
+    </MaterialContext.Provider>
+  );
+};
+
+export const useMaterials = () => {
+  const context = useContext(MaterialContext);
+  if (!context) {
+    throw new Error("useMaterials must be used within a MaterialProvider");
+  }
+  return context;
+};

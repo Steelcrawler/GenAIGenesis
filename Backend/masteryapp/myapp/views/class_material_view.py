@@ -31,8 +31,8 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
     queryset = ClassMaterial.objects.all()
     serializer_class = ClassMaterialSerializer
     authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
-    
-    
+    permission_classes = [IsAuthenticated]
+        
     def get(self, request, *args, **kwargs):
         pk = kwargs.get('pk', None)
         if pk:
@@ -71,7 +71,8 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
                                               bucket_name="educatorgenai", 
                                               user_id=str(request.user.id),
                                               credentials_path='genaigenesis-454500-2b74084564ba.json',
-                                              file_name=material_raw['file_name']
+                                              file_name=material_raw['file_name'],
+                                              course_id=course_id,
                                               )
         
         success, text_partition_status = parse_result.get('success', False), parse_result.get('text_extracted', False)

@@ -19,6 +19,7 @@ class PDFProcessor:
     def __init__(self, credentials_path: Optional[str] = None, debug: bool = False):
         """Initialize the PDF processor with GCP credentials"""
         self.debug = debug
+        self.credentials_path = credentials_path
         env_path = '../.env'
         load_dotenv(dotenv_path=env_path)
         
@@ -30,7 +31,24 @@ class PDFProcessor:
         
         # Initialize GCP services
         vertexai.init(project=self.project_id, location=self.location)
-        self.storage_client = storage.Client.from_service_account_json(credentials_path)
+        
+        # Initialize storage client
+        try:
+            if credentials_path and os.path.exists(credentials_path):
+                if self.debug:
+                    print(f"Using service account credentials from: {credentials_path}")
+                self.storage_client = storage.Client.from_service_account_json(credentials_path)
+            else:
+                if self.debug:
+                    print("Using Application Default Credentials")
+                self.storage_client = storage.Client()
+                
+            if self.debug:
+                print("Storage client initialized successfully")
+        except Exception as e:
+            print(f"Error initializing storage client: {str(e)}")
+            self.storage_client = None
+            raise
         
         # Initialize the generative model for subject extraction
         self.model = GenerativeModel(model_name="gemini-1.5-flash-001")
@@ -106,6 +124,7 @@ class PDFProcessor:
             3. Removing artifacts and noise
             4. Ensuring proper spacing between sections
             5. Keeping the document's logical structure
+            6. Remove stay new lines and whitespace
             
             Return only the cleaned text, with no additional commentary or formatting.
             
@@ -148,11 +167,13 @@ class PDFProcessor:
                 """
             
             prompt = f"""
-            Extract key subjects (at most 5) from the following text content from a PDF document.
+            Extract key subjects (ONLY THE MOST IMPORTANT ONES) from the following text content from a PDF document.
             Analyze the entire document to identify the most important topics and concepts.
             The subjects should be the main topics of the document. (theoretical, not practical)
             {existing_subjects_text}
             
+            You should, very rarely, be adding more subjects than what is already provided, unless nothing else is relevant. 
+            SUBJECTS MUST BE AT MOST 3 WORDS.
             Format your response as a JSON array, each having the following structure:
             {{
                 "subject": "The subject name/term",

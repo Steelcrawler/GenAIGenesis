@@ -21,7 +21,7 @@ class Question(models.Model):
     )
     choices = models.TextField() # Separated by ';;/;;' per different question to store as a string.
     single_correct_choice = models.SmallIntegerField(null=True) # if multiple choice.
-    correct_choices = models.SmallIntegerField(max_length=100, null=True) # The index(es) of the correct answer.
+    correct_choices = models.SmallIntegerField(null=True) # The index(es) of the correct answer.
     correct_short_answer = models.TextField(null=True)
     attempted_single_choice = models.SmallIntegerField(null=True)
     attempted_choices = models.CharField(max_length=100, null=True)

@@ -1,10 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { CourseProvider } from "@/context/CourseContext";
-import  AuthProvider  from "@/context/AuthContext";
+import AuthProvider from "@/context/AuthContext";
+import { SyncedProvider } from "@/components/SyncedProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,14 +18,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <AuthProvider>
-          <TooltipProvider>
-            <CourseProvider>
-              <Sonner />
-              {children}
-            </CourseProvider>
-          </TooltipProvider>
+          <SyncedProvider>
+            {children}
+          </SyncedProvider>
         </AuthProvider>
       </body>
     </html>

@@ -120,8 +120,7 @@ class SimpleRAG:
             # if self.debug:
             #     print(f"\nRetrieved context: {retrieval_response.text}")
 
-            prompt = f"""Generate 10 quiz questions based on the retrieved context about medical imaging and pneumothorax detection. 
-            The question should be about deep learning applications in chest radiograph analysis.
+            prompt = f"""Generate 10 quiz questions based on the retrieved context.
             Return ONLY a JSON object with no other text, markdown, or formatting.
 
             Schema:

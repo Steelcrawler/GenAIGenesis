@@ -22,12 +22,6 @@ class CourseViewSet(viewsets.ModelViewSet):
             return Course.objects.filter(user=self.request.user)
         return Course.objects.none()
     
-    """def perform_create(self, serializer):
-        if self.request.user.is_authenticated:
-            serializer.save(user=self.request.user)
-        else:
-            serializer.save()"""
-
     def get(self, request, *args, **kwargs):
         id_param = kwargs.get('pk')
         if id_param:

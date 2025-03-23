@@ -39,9 +39,9 @@ class QuizViewSet(viewsets.ModelViewSet):
     def get(self, request, *args, **kwargs):
         pk = kwargs.get('pk', None)
         if pk:
-            class_material = get_object_or_404(Quiz, pk=pk)
+            quiz = get_object_or_404(Quiz, pk=pk)
             return Response({
-                'quiz' : QuizSerializer(class_material).data
+                'quiz' : QuizSerializer(quiz).data
             },
                             status=status.HTTP_200_OK)
             

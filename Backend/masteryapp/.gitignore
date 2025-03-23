@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.py~ 
+*.egg
+*.egg-info/
+dist/
+build/
+env/
+venv/
+ENV/
+*.env
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+*.log
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# Migrations (if you want to avoid tracking them — optional)
+**/migrations/__pycache__/
+**/migrations/*.pyc
+**/migrations/*.pyo
+**/migrations/*.pyd
+**/migrations/*.py~ 
+
+# You can uncomment this line if you don’t want to track migrations at all
+# **/migrations/
+
+# Docker
+*.pid
+*.seed
+*.bak
+*.tmp
+docker-compose.override.yml
+.env.docker
+__docker_logs__/
+docker_data/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Git
+*.orig
+
+# Coverage/testing
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+coverage.xml
+nosetests.xml
+test-results/
+junit-*.xml
+
+# MySQL dump
+*.sql
+*.sql.gz

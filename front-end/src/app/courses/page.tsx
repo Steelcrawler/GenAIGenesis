@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { useCourses } from '@/context/CourseContext';
 import Layout from '@/components/Layout';
 import CourseCard from '@/components/CourseCard';
 import { toast } from 'sonner';
-import OpenQuizList from '@/components/quiz/OpenQuizList';
+import QuizList from '@/components/quiz/QuizList';
 
 export default function CoursesPage() {
   const { filteredCourses, deleteCourse, searchTerm } = useCourses();
@@ -26,6 +26,7 @@ export default function CoursesPage() {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6">
+        {/* Courses Header */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-semibold">Your Courses</h1>
@@ -43,6 +44,7 @@ export default function CoursesPage() {
           </Link>
         </div>
 
+        {/* Courses Grid */}
         {filteredCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => (
@@ -63,8 +65,8 @@ export default function CoursesPage() {
               {searchTerm ? 'No courses found' : 'No courses yet'}
             </h3>
             <p className="text-muted-foreground mb-6">
-              {searchTerm
-                ? `Try adjusting your search term or clear it to see all courses.`
+              {searchTerm 
+                ? `Try adjusting your search term or clear it to see all courses.` 
                 : `Let's create your first course to get started.`}
             </p>
             {!searchTerm && (
@@ -94,9 +96,11 @@ export default function CoursesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
         {/* Open Quizzes Section */}
         <div className="mt-12">
-          <OpenQuizList />
+          <h2 className="text-2xl font-bold mb-4">Open Quizzes</h2>
+          <QuizList isCompleted={false} horizontalScroll={false} />
         </div>
       </div>
     </Layout>

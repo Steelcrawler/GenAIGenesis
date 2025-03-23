@@ -1,4 +1,5 @@
-"use client";
+// File: app/course/[id]/page.tsx
+'use client';
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -21,6 +22,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import SubjectMasteryContainer from "@/components/SubjectMasteryContainer";
 import { useCurrentCourse } from "@/context/CurrentCourseContext";
+import QuizList from "@/components/quiz/QuizList";
 
 export default function CourseDetail() {
   const params = useParams();
@@ -34,9 +36,8 @@ export default function CourseDetail() {
 
   const handleQuizStart = () => {
     setCurrentCourseId(id);
-    console.log(id)
     router.push("/quiz-config");
-  }
+  };
 
   const course = getCourse(id);
 
@@ -69,6 +70,7 @@ export default function CourseDetail() {
   return (
     <Layout>
       <div className="container mx-auto px-4 pb-12 animate-fade-in">
+        {/* Back Button */}
         <Button
           variant="ghost"
           className="mb-6 gap-2 cursor-pointer"
@@ -78,7 +80,9 @@ export default function CourseDetail() {
           <span>Back</span>
         </Button>
 
+        {/* Top Section: Two Columns */}
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left Column: Image & Actions */}
           <div className="lg:w-1/3">
             <div
               className={`rounded-lg overflow-hidden border ${
@@ -104,56 +108,51 @@ export default function CourseDetail() {
               )}
             </div>
 
-            <div className="mt-6 flex space-x-4">
-              <Link href={`/edit-course/${id}`} className="flex-1">
+            {/* Action Buttons: Edit, Delete & Start Quiz */}
+            <div className="mt-6 flex flex-col gap-2">
+              <div className="flex space-x-4">
+                <Link href={`/edit-course/${id}`} className="flex-1">
+                  <Button className="w-full gap-2 cursor-pointer" variant="outline">
+                    <Edit className="h-4 w-4" />
+                    <span>Edit</span>
+                  </Button>
+                </Link>
                 <Button
-                  className="w-full gap-2 cursor-pointer"
                   variant="outline"
+                  className="flex-1 gap-2 text-destructive hover:bg-destructive hover:text-white cursor-pointer"
+                  onClick={() => setConfirmDelete(true)}
                 >
-                  <Edit className="h-4 w-4" />
-                  <span>Edit</span>
+                  <Trash className="h-4 w-4" />
+                  <span>Delete</span>
                 </Button>
-              </Link>
+              </div>
               <Button
-                variant="outline"
-                className="flex-1 gap-2 text-destructive hover:bg-destructive hover:text-white cursor-pointer"
-                onClick={() => setConfirmDelete(true)}
+                className="w-full gap-2 cursor-pointer bg-blue-600 hover:bg-blue-600/80 text-white"
+                onClick={handleQuizStart}
               >
-                <Trash className="h-4 w-4" />
-                <span>Delete</span>
+                <span role="img" aria-label="play">►</span> Start Quiz
               </Button>
             </div>
-            <Button
-              className="mt-15 w-full gap-2 cursor-pointer bg-blue-600 hover:bg-blue-600/80 text-white"
-              onClick={handleQuizStart}
-            >
-            <span role="img" aria-label="play">►</span> Start Quiz
-          </Button>
           </div>
 
-         
-
+          {/* Right Column: Course Details */}
           <div className="lg:w-2/3">
             <div className="glass rounded-lg p-8">
               <h1 className="text-3xl font-semibold mb-4">{course.name}</h1>
-
               <div className="flex flex-wrap gap-x-6 gap-y-2 mb-8 text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <Calendar className="mr-2 h-4 w-4" />
                   <span>Created: {format(createdDate, "MMM d, yyyy")}</span>
                 </div>
-                
               </div>
-
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-medium mb-2">Description</h2>
                   <p className="text-muted-foreground whitespace-pre-line">
                     {course.description}
                   </p>
-                  
                   <div className="mt-4">
-                    <SubjectMasteryContainer courseId={id}/>
+                    <SubjectMasteryContainer courseId={id} />
                   </div>
                 </div>
               </div>
@@ -161,19 +160,33 @@ export default function CourseDetail() {
           </div>
         </div>
 
-        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        {/* Quiz Lists Section: Full Width Under Top Section */}
+        <div className="mt-12">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">
+              Open Quizzes for this Course
+            </h2>
+            <QuizList courseId={id} isCompleted={false} horizontalScroll={false} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-4">
+              Completed Quizzes for this Course
+            </h2>
+            <QuizList courseId={id} isCompleted={true} horizontalScroll={false} />
+          </div>
+        </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(false)}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                course.
+                This action cannot be undone. This will permanently delete the course.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="cursor-pointer">
-                Cancel
-              </AlertDialogCancel>
+              <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 className="cursor-pointer bg-destructive text-destructive-foreground hover:bg-destructive/80"

@@ -33,23 +33,28 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
     serializer_class = ClassMaterialSerializer
     authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
-        
-    def get(self, request, *args, **kwargs):
+
+    def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get('pk', None)
-        if pk:
-            class_material = get_object_or_404(ClassMaterial, pk=pk)
-            file_bytes = get_pdf_bytes_from_gcs(
-                bucket_name="educatorgenai",
-                user_id=request.user.id,
-                course_id=class_material.course.id,
-                blob_name=class_material.file_name,
-            )
-            return Response({
-                'class_material' : ClassMaterialSerializer(class_material).data,
-                'file' : file_bytes
-            },
-                            status=status.HTTP_200_OK)
-            
+        class_material = get_object_or_404(ClassMaterial, pk=pk)
+        print('class_material: ', class_material.course.id)
+        print('user_id: ', request.user.id)
+        print('blob_name: ', class_material.file_name.split('/').pop())
+        file_bytes = get_pdf_bytes_from_gcs(
+            bucket_name="educatorgenai",
+            user_id=request.user.id,
+            course_id=class_material.course.id,
+            blob_name=class_material.file_name.split('/').pop(),
+        )
+        print('Received detailed request, sending data: ')
+        return Response({
+            'class_material' : ClassMaterialSerializer(class_material).data,
+            'file' : file_bytes
+        },
+                        status=status.HTTP_200_OK)
+    
+
+    def list(self, request, *args, **kwargs):
         course_id = self.request.query_params.get('course_id')
         
         if course_id:
@@ -60,6 +65,8 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
         return Response({
             'class_materials': serializer.data
         }, status=status.HTTP_200_OK)
+                 
+        
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):

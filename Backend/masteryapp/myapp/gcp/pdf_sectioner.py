@@ -121,10 +121,43 @@ class PDFProcessor:
             return False
 
     def extract_text_from_pdf(self, pdf_bytes: io.BytesIO) -> str:
-        """Extract text content from a PDF file using Gemini"""
+        """Extract text content from a PDF file using Gemini, handling malformed PDFs with missing EOF markers"""
         try:
-            # First use PyPDF2 to get raw text from the entire PDF
-            pdf_reader = PyPDF2.PdfReader(pdf_bytes)
+            # First try to create a PDF reader with the provided bytes
+            try:
+                pdf_reader = PyPDF2.PdfReader(pdf_bytes)
+            except Exception as pdf_error:
+                if self.debug:
+                    print(f"Error initializing PDF reader: {str(pdf_error)}. Attempting to repair.")
+                
+                # Try to repair the PDF by ensuring it has an EOF marker
+                pdf_bytes.seek(0)
+                pdf_content = pdf_bytes.read()
+                
+                # Check if the PDF is missing the EOF marker (%%EOF)
+                if not pdf_content.rstrip().endswith(b'%%EOF'):
+                    if self.debug:
+                        print("Detected missing EOF marker, attempting to repair")
+                    
+                    # Add the EOF marker
+                    repaired_content = pdf_content + b'\n%%EOF\n'
+                    
+                    # Create a new BytesIO object with the repaired content
+                    repaired_pdf = io.BytesIO(repaired_content)
+                    try:
+                        pdf_reader = PyPDF2.PdfReader(repaired_pdf)
+                        if self.debug:
+                            print("Successfully repaired and loaded PDF")
+                    except Exception as repair_error:
+                        if self.debug:
+                            print(f"Failed to repair PDF: {str(repair_error)}")
+                        return ""  # Return empty string if we can't repair it
+                else:
+                    # If it's not an EOF issue, re-raise the exception
+                    if self.debug:
+                        print("PDF has an EOF marker but still can't be read properly")
+                    return ""
+            
             total_pages = len(pdf_reader.pages)
             
             if self.debug:
@@ -132,10 +165,19 @@ class PDFProcessor:
             
             # Extract text from all pages at once
             raw_text = ""
-            for page in pdf_reader.pages:
-                raw_text += page.extract_text() + "\n\n"
+            for page_num, page in enumerate(pdf_reader.pages):
+                try:
+                    page_text = page.extract_text()
+                    raw_text += page_text + "\n\n"
+                except Exception as page_error:
+                    if self.debug:
+                        print(f"Error extracting text from page {page_num + 1}: {str(page_error)}")
+                    # Continue with other pages even if one fails
+                    continue
             
             if not raw_text.strip():
+                if self.debug:
+                    print("No text could be extracted from PDF")
                 return ""
             
             if self.debug:
@@ -173,12 +215,14 @@ class PDFProcessor:
                 return cleaned_text if cleaned_text else raw_text
                 
             except Exception as e:
-                print(f"Error processing text with LLM: {str(e)}")
+                if self.debug:
+                    print(f"Error processing text with LLM: {str(e)}")
                 # If LLM fails, return the raw text as fallback
                 return raw_text.strip()
             
         except Exception as e:
-            print(f"Error extracting text from PDF: {str(e)}")
+            if self.debug:
+                print(f"Error extracting text from PDF: {str(e)}")
             return ""
 
     def identify_key_subjects(self, text_content: str, existing_subjects: List[str] = None) -> List[Dict[str, Any]]:

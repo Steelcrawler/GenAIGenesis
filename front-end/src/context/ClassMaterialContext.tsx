@@ -43,6 +43,7 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
   children, onMaterialChange
 }) => {
   const [materials, setMaterials] = useState<ClassMaterial[]>([]);
+  const [materialTest, setMaterialTest] = useState<ClassMaterial>();
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +56,10 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
     
     try {
       const { data } = await apiService.get(`${API_URL}/materials/`);
-      setMaterials(Array.isArray(data) ? data : []);
+      console.log('materialTest: ', data);
+      setMaterials(Array.isArray(data['class_materials']) ? data['class_materials'] : []);
+      //const response = await apiService.get(`${API_URL}/materials/b65b6f8177da4d128668210f6b4b1cb6/`);
+      //console.log('materialTest: ', response.data);
     } catch (err) {
       setError("Failed to fetch materials. Please try again.");
       console.error("Error fetching materials:", err);

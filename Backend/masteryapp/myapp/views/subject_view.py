@@ -31,6 +31,7 @@ from ..models.material_snippet import MaterialSnippet
 from io import BytesIO
 from ..gcp.rag_question_maker import QuizMakerRAG
 
+
 class SubjectViewset(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
@@ -49,9 +50,5 @@ class SubjectViewset(viewsets.ModelViewSet):
             queryset = Subject.objects.filter(course_id=course_id)
         else:
             queryset = Subject.objects.filter(course__user=request.user)
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
         return Response({'subjects': serializer.data}, status=status.HTTP_200_OK)
-
-
-
-            

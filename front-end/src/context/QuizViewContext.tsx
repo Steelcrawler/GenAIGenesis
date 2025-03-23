@@ -59,6 +59,8 @@ type QuizContextType = {
   getQuiz: (id: string) => Quiz | undefined;
   createQuiz: (quizData: Omit<Quiz, "id">) => Promise<Quiz | null>;
   submitQuiz: ({id, responses}: QuizSubmission) => Promise<Quiz | null>;
+  
+  getOpenQuizzes: () => Quiz[];
 };
 
 const QuizContext = createContext<QuizContextType | undefined>(undefined);
@@ -142,6 +144,10 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
       console.error("Error updating quiz:", err);
       return null;
     }
+  }
+
+  const getOpenQuizzes = () => {
+    return quizzes ? quizzes.filter(q => !q.completed_at) : [];
   };
 
   return (
@@ -152,7 +158,8 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
         setCurrentQuiz,
         getQuiz,
         createQuiz,
-        submitQuiz
+        submitQuiz,
+        getOpenQuizzes,
       }}
     >
       {children}

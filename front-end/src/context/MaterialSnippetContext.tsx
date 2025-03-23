@@ -42,12 +42,17 @@ export const MaterialSnippetProvider: React.FC<{ children: ReactNode }> = ({ chi
     setError(null);
 
     try {
-      const { data } = await apiService.get(`${API_URL}/materialsnippets/`);
+      const { data } = await apiService.get(`${API_URL}/snippets/`);
       if (Array.isArray(data.material_snippets)) {
+        console.log("FETCH SNIPPETS !!!! : ", data.material_snippets);
         setSnippets(data.material_snippets);
       } else {
         setSnippets([]);
       }
+
+      console.log("SNIPPET DATA : ", data);
+
+
     } catch (err) {
       setError("Failed to fetch material snippets.");
       console.error("Error fetching material snippets:", err);

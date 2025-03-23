@@ -122,12 +122,23 @@ def upload_pdf_to_gcs(file_obj, bucket_name: str, user_id: str, course_id: str, 
         logger.error(f"Error uploading PDF: {str(e)}")
         return False
     
-def get_pdf_bytes_from_gcs(bucket_name: str, user_id: str, course_id: str, blob_name: str, credentials_path: Optional[str] = None) -> bytes:
-    """Get PDF bytes from GCS bucket"""
+def get_pdf_bytes_from_gcs(bucket_name: str, user_id: str, course_id: str, file_name: str, credentials_path: Optional[str] = None) -> bytes:
+    """Get PDF bytes from GCS bucket
+    
+    Args:
+        bucket_name: Name of the GCS bucket
+        user_id: User ID or folder name where files are organized
+        course_id: Course ID or folder name where files are organized
+        file_name: Name of the file stored in GCS
+        credentials_path: Optional path to service account file (uses ADC if None)
+        
+    Returns:
+        bytes: The file content as bytes
+    """
     try:
         storage_client = get_storage_client(credentials_path)
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(f"{user_id}/{course_id}/{blob_name}")
+        blob = bucket.blob(f"{user_id}/{course_id}/{file_name}_highlighted.pdf")
         return blob.download_as_bytes()
     except Exception as e:
         logger.error(f"Error getting PDF bytes from GCS: {str(e)}")
@@ -185,29 +196,52 @@ def create_user_folder_in_gcs(bucket_name: str, user_id: str, course_id: str,
         return False
 
 
-def download_file_from_gcs(bucket_name: str, blob_name: str, credentials_path: Optional[str] = None) -> io.BytesIO:
-    """Download a file from GCS bucket as a BytesIO object"""
+def download_file_from_gcs(bucket_name: str, user_id: str, course_id: str, file_name: str, credentials_path: Optional[str] = None) -> io.BytesIO:
+    """Download a file from GCS bucket as a BytesIO object
+    
+    Args:
+        bucket_name: Name of the GCS bucket
+        user_id: User ID or folder name where files are organized
+        course_id: Course ID or folder name where files are organized
+        file_name: Name of the file to download from GCS
+        credentials_path: Optional path to service account file (uses ADC if None)
+        
+    Returns:
+        io.BytesIO: File contents as a BytesIO object
+    """
     try:
         storage_client = get_storage_client(credentials_path)
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
+        blob = bucket.blob(f"{user_id}/{course_id}/{file_name}")
         
         file_bytes = io.BytesIO()
         blob.download_to_file(file_bytes)
         file_bytes.seek(0)  # Reset pointer to beginning of file
         
-        logger.info(f"Downloaded {blob_name} from bucket {bucket_name}")
+        logger.info(f"Downloaded {file_name} from bucket {bucket_name}")
         return file_bytes
     except Exception as e:
         logger.error(f"Error downloading file from GCS: {str(e)}")
         raise
 
 
-def get_json_data_from_gcs(bucket_name: str, file_blob_name: str, credentials_path: Optional[str] = None) -> Dict[str, Any]:
-    """Get JSON data from GCS bucket"""
+def get_json_data_from_gcs(bucket_name: str, user_id: str, course_id: str, file_name: str, credentials_path: Optional[str] = None) -> Dict[str, Any]:
+    """Get JSON data from GCS bucket
+    
+    Args:
+        bucket_name: Name of the GCS bucket
+        user_id: User ID or folder name where files are organized
+        course_id: Course ID or folder name where files are organized
+        file_name: Name of the file to get JSON data from
+        credentials_path: Optional path to service account file (uses ADC if None)
+        
+    Returns:
+        Dict[str, Any]: Parsed JSON data
+    """
     try:
         storage_client = get_storage_client(credentials_path)
         bucket = storage_client.bucket(bucket_name)
+        file_blob_name = f"{user_id}/{course_id}/{file_name}"
         json_blob_name = file_blob_name.rsplit('.', 1)[0] + '.json'
         blob = bucket.blob(json_blob_name)
         

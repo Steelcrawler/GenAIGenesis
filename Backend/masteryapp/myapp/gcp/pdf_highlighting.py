@@ -34,21 +34,24 @@ def get_predefined_colors() -> List[Tuple[float, float, float]]:
         (1.0, 0.9, 0.7),  # Light Orange
     ]
 
-def upload_highlighted_pdf_to_gcs(pdf_bytes: io.BytesIO, bucket_name: str, pdf_path: str, 
+def upload_highlighted_pdf_to_gcs(pdf_bytes: io.BytesIO, bucket_name: str, user_id: str, course_id: str, file_name: str, 
                                   credentials_path: Optional[str] = None) -> str:
-    """Upload a highlighted PDF to GCS bucket"""
+    """Upload a highlighted PDF to GCS bucket
+    
+    Args:
+        pdf_bytes: BytesIO object containing the PDF data
+        bucket_name: Name of the GCS bucket
+        user_id: User ID or folder name to organize files
+        course_id: Course ID or folder name to organize files
+        file_name: Name of the file to be stored in GCS
+        credentials_path: Optional path to service account file (uses ADC if None)
+        
+    Returns:
+        str: GCS URL of the uploaded highlighted PDF
+    """
     try:
-        # Parse path components
-        path_parts = pdf_path.split('/')
-        if len(path_parts) >= 3:
-            user_id = path_parts[0]
-            course_id = path_parts[1]
-            file_name = path_parts[-1].rsplit('.', 1)[0] + '_highlighted.pdf'
-        else:
-            # Default structure if path doesn't match expected format
-            user_id = "default_user"
-            course_id = "default_course"
-            file_name = pdf_path.rsplit('/', 1)[-1].rsplit('.', 1)[0] + '_highlighted.pdf'
+        # Generate highlighted filename
+        highlighted_file_name = file_name.rsplit('.', 1)[0] + '_highlighted.pdf'
         
         # Reset file pointer and use the upload_pdf_to_gcs function
         pdf_bytes.seek(0)
@@ -57,26 +60,39 @@ def upload_highlighted_pdf_to_gcs(pdf_bytes: io.BytesIO, bucket_name: str, pdf_p
             bucket_name=bucket_name,
             user_id=user_id,
             course_id=course_id,
-            file_name=file_name,
+            file_name=highlighted_file_name,
             credentials_path=credentials_path
         )
         
         if not upload_success:
-            raise Exception(f"Failed to upload highlighted PDF to {bucket_name}/{user_id}/{course_id}/{file_name}")
+            raise Exception(f"Failed to upload highlighted PDF to {bucket_name}/{user_id}/{course_id}/{highlighted_file_name}")
         
-        highlighted_pdf_url = f"gs://{bucket_name}/{user_id}/{course_id}/{file_name}"
+        highlighted_pdf_url = f"gs://{bucket_name}/{user_id}/{course_id}/{highlighted_file_name}"
         logger.info(f"Uploaded highlighted PDF to {highlighted_pdf_url}")
         return highlighted_pdf_url
     except Exception as e:
         logger.error(f"Error uploading highlighted PDF: {str(e)}")
         raise
 
-def highlight_pdf_with_subjects(bucket_name: str, pdf_blob_name: str, 
+def highlight_pdf_with_subjects(bucket_name: str, user_id: str, course_id: str, 
+                                file_name: str, 
                                 json_data: Dict[str, Any], 
                                 credentials_path: Optional[str] = None) -> Dict[str, Any]:
-    """Add subject indicators to PDF pages where subjects are detected"""
+    """Add subject indicators to PDF pages where subjects are detected
+    
+    Args:
+        bucket_name: Name of the GCS bucket
+        user_id: User ID or folder name where files are organized
+        course_id: Course ID or folder name where files are organized
+        file_name: Name of the file stored in GCS
+        json_data: Dictionary containing partitioned text and subjects
+        credentials_path: Optional path to service account file (uses ADC if None)
+        
+    Returns:
+        Dict[str, Any]: Results of the highlighting operation
+    """
     results = {
-        "pdf_name": pdf_blob_name,
+        "pdf_name": file_name,
         "success": False,
         "marked_subjects": [],
         "marked_pdf_url": "",
@@ -95,7 +111,7 @@ def highlight_pdf_with_subjects(bucket_name: str, pdf_blob_name: str,
         subjects = [subject.get("subject") for subject in json_data.get("subjects", [])]
         
         # Download the PDF file
-        pdf_bytes = download_file_from_gcs(bucket_name, pdf_blob_name, credentials_path)
+        pdf_bytes = download_file_from_gcs(bucket_name, user_id, course_id, file_name, credentials_path)
         
         # Open the PDF with PyMuPDF
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -219,11 +235,13 @@ def highlight_pdf_with_subjects(bucket_name: str, pdf_blob_name: str,
         doc.save(output_pdf)
         doc.close()
         
-        # Upload modified PDF back to GCS using the function from uploadpdf.py
+        # Upload modified PDF back to GCS
         marked_pdf_url = upload_highlighted_pdf_to_gcs(
             pdf_bytes=output_pdf,
             bucket_name=bucket_name,
-            pdf_path=pdf_blob_name,
+            user_id=user_id,
+            course_id=course_id,
+            file_name=file_name,
             credentials_path=credentials_path
         )
         
@@ -242,12 +260,14 @@ def highlight_pdf_with_subjects(bucket_name: str, pdf_blob_name: str,
         results["error"] = f"Error marking PDF: {str(e)}"
         return results
 
-def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = None, bucket_name: str = "educatorgenai") -> Dict[str, Any]:
+def process_pdf_with_subjects(user_id: str, course_id: str, file_name: str, credentials_path: Optional[str] = None, bucket_name: str = "educatorgenai") -> Dict[str, Any]:
     """
     Process a PDF file with subjects from a JSON file and return the highlighted PDF.
     
     Args:
-        pdf_path: Path to the PDF file in GCS (e.g. "folder/file.pdf")
+        user_id: User ID or folder name where files are organized
+        course_id: Course ID or folder name where files are organized
+        file_name: Name of the PDF file stored in GCS
         credentials_path: Optional path to GCP credentials file. If None, uses ADC.
         bucket_name: Name of the GCS bucket
         
@@ -278,16 +298,18 @@ def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = N
             results["error"] = f"Cannot access bucket: {bucket_name}"
             return results
         
-        # Get JSON data - json path is derived from pdf_path
-        json_path = pdf_path.rsplit('.', 1)[0] + '.json'
-        logger.info(f"Retrieving JSON data from GCS: {json_path}")
-        json_data = get_json_data_from_gcs(bucket_name, json_path, credentials_path)
+        # Get JSON data - json file has same name but .json extension
+        json_file_name = file_name.rsplit('.', 1)[0] + '.json'
+        logger.info(f"Retrieving JSON data from GCS: {user_id}/{course_id}/{json_file_name}")
+        json_data = get_json_data_from_gcs(bucket_name, user_id, course_id, json_file_name, credentials_path)
         
         # Process the PDF
-        logger.info(f"Processing PDF with subjects from JSON: {pdf_path}")
+        logger.info(f"Processing PDF with subjects from JSON: {user_id}/{course_id}/{file_name}")
         results = highlight_pdf_with_subjects(
             bucket_name=bucket_name, 
-            pdf_blob_name=pdf_path, 
+            user_id=user_id,
+            course_id=course_id,
+            file_name=file_name,
             json_data=json_data,
             credentials_path=credentials_path
         )
@@ -299,8 +321,10 @@ def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = N
         return results
 
 if __name__ == "__main__":
-    # Example usage
-    pdf_path = "john2/cs101/lec02_2_DecisionTrees_complete.pdf"
+    # Example usage with separate parameters
+    user_id = "john2"
+    course_id = "cs101"
+    file_name = "lec02_2_DecisionTrees_complete.pdf"
     credentials_path = None
     
     # Log authentication method
@@ -309,7 +333,7 @@ if __name__ == "__main__":
     else:
         logger.info("Using Application Default Credentials")
     
-    results = process_pdf_with_subjects(pdf_path, credentials_path)
+    results = process_pdf_with_subjects(user_id, course_id, file_name, credentials_path)
     
     # Print results
     print("\nProcessing Results:")

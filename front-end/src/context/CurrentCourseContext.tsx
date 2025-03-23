@@ -19,7 +19,7 @@ export const CurrentCourseProvider: React.FC<{ children: ReactNode }> = ({
         <CurrentCourseContext.Provider
           value={{
             currentCourseId,
-            setCurrentCourseId,
+            setCurrentCourseId
           }}
         >
           {children}

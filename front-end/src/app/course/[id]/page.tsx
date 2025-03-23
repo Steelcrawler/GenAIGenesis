@@ -34,6 +34,7 @@ export default function CourseDetail() {
 
   const handleQuizStart = () => {
     setCurrentCourseId(id);
+    console.log(id)
     router.push("/quiz-config");
   }
 

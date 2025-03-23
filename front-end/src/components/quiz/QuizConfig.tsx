@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { QuizConfig } from '@/types/quiz';
 import Button from './Button';
-import { useCourses, ClassMaterial } from '@/context/CourseContext';
+import { useCourses } from '@/context/CourseContext';
+import { ClassMaterial, useMaterials } from '@/context/ClassMaterialContext';
 import { useCurrentCourse } from '@/context/CurrentCourseContext';
 
 interface pdfObject {
@@ -24,6 +25,7 @@ interface QuizConfigProps {
 const QuizConfig: React.FC<QuizConfigProps> = ({ defaultConfig, onConfigSubmit, handleCancel }) => {
   const { getCourse, courses } = useCourses();
   const { currentCourseId } = useCurrentCourse();
+  const { materials } = useMaterials();
   const [config, setConfig] = useState<QuizConfig>(defaultConfig);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [options, setOptions] = useState<ClassMaterial[]>([]);
@@ -35,16 +37,14 @@ const QuizConfig: React.FC<QuizConfigProps> = ({ defaultConfig, onConfigSubmit, 
     }
 
     setSelectedCourseId(currentCourseId);
-    console.log(selectedCourseId)
-    const courseDocs = selectedCourseId ? getCourse(selectedCourseId)?.material || [] : []
-    console.log(getCourse(selectedCourseId || ""))
+    const courseDocs = materials.filter(material => material.course === currentCourseId)
     setOptions(courseDocs);
     setSelectedDocumentIds([]);
   }, [])
 
   const handleSelectedCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCourseId(e.target.value);
-    const courseDocs = selectedCourseId ? getCourse(selectedCourseId)?.material || [] : []
+    const courseDocs = materials.filter(material => material.course === e.target.value)
     setOptions(courseDocs);
     setSelectedDocumentIds([]);
   };

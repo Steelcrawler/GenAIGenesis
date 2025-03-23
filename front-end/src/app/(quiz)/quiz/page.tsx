@@ -26,6 +26,7 @@ const Quiz = () => {
   // Initialize quiz
   useEffect(() => {
     const initQuiz = () => {
+      console.log(currentQuiz);
       if (!currentQuiz) {
         console.log("Current quiz is not set!");
         return;
@@ -35,10 +36,13 @@ const Quiz = () => {
         allQuestions
           .filter(question => question.quiz_id == currentQuiz.id!)
         : [])
+      console.log(allQuestions && allQuestions
+        .filter(question => question.quiz_id == currentQuiz.id!))
     };
 
     // Initialize with a small delay for loading animation
     const timer = setTimeout(initQuiz, 500);
+    setIsLoading(false);
     return () => clearTimeout(timer);
   }, []);
 

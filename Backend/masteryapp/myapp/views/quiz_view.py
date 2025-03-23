@@ -149,7 +149,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         
         return Response({
             'quiz' : QuizSerializer(new_quiz).data,
-            'questions' : QuestionSerializer(final_questions, many=True)
+            'questions' : QuestionSerializer(final_questions, many=True).data
         },
                         status=status.HTTP_201_CREATED)
         

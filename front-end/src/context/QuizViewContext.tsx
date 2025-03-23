@@ -10,7 +10,23 @@ import React, {
 
 import { useAuth } from '@/context/AuthContext';
 import { apiService } from '@/services/api';
-import { Question, useQuestions } from "@/context/QuestionContext";
+import { QuestionType, useQuestions } from "@/context/QuestionContext";
+
+type FakeQuestion = {
+  id: string;
+  quiz_id: string;
+  question: string;
+  type: QuestionType;
+  choices: string;
+  single_correct_choice: number | null;
+  correct_choices: number | null;
+  correct_short_answer: string | null;
+  attempted_single_choice: number | null;
+  attempted_choices: string | null;
+  attempted_short_answer: string | null;
+  is_correct: boolean | null;
+  snippet_id: string | null;
+};
 
 const API_URL = "http://localhost:8000/api";
 
@@ -75,10 +91,18 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
       console.log(finalData)
       const { data } = await apiService.post(`${API_URL}/quizzes/`, finalData);
       console.log(`data`)
+      console.log(data)
       const newQuiz: Quiz = data.quiz;
-      const questions: Question[] = data.questions;
+      const questions = data.questions.map((question: FakeQuestion) => {
+        return ({ 
+          ...question, 
+          choices: question.choices.split(';;/;;')
+        })
+      });
+      console.log(questions)
       updateQuestions(questions);
       setCurrentQuiz(newQuiz);
+      console.log("Here3")
 
       setQuizzes((prev) => Array.isArray(prev) ? [newQuiz, ...prev] : [newQuiz]);
 

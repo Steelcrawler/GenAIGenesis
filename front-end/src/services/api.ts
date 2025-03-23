@@ -33,8 +33,11 @@ export const apiService = {
             data: errorData
           };
         }
+
+        const contentType = response.headers.get("content-type");
+        const isJson = contentType && contentType.includes("application/json");
   
-        const data = await response.json();
+        const data = isJson ? await response.json() : null;
         return { data, status: response.status };
       } catch (error) {
         console.error("API request failed:", error);

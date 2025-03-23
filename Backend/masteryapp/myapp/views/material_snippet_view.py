@@ -20,7 +20,7 @@ class MaterialSnippetViewset(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return MaterialSnippetSerializer.objects.filter(class_material__course__user=self.request.user)
+            return MaterialSnippet.objects.filter(class_material__course__user=self.request.user)
         return MaterialSnippet.objects.none()
 
     def retrieve(self, request, *args, **kwargs):

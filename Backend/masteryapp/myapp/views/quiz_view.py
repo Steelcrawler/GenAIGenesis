@@ -66,6 +66,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         human_date = now.strftime("%d %B")
         data['name'] = data.get('name', f'{human_date} quiz')
         serializer = QuizSerializer(data=data)
+        print(f"QuizView Create data: {data}")
         if not serializer.is_valid():
             return Response({
                 'error' : serializer.errors
@@ -150,7 +151,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         
         return Response({
             'quiz' : QuizSerializer(new_quiz).data,
-            'questions' : QuestionSerializer(final_questions, many=True)
+            'questions' : QuestionSerializer(final_questions, many=True).data
         },
                         status=status.HTTP_201_CREATED)
         

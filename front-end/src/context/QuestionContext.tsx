@@ -20,7 +20,7 @@ export type Question = {
   quiz_id: string;
   question: string;
   type: QuestionType;
-  choices: string;
+  choices: string[];
   single_correct_choice: number | null;
   correct_choices: number | null;
   correct_short_answer: string | null;

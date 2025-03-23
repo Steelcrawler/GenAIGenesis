@@ -1,31 +1,25 @@
 import os
 import io
-import json
 import logging
 import random
 import tempfile
 from typing import Dict, Any, List, Tuple, Optional
-from google.cloud import storage
-from google.cloud.exceptions import NotFound, Forbidden
 import fitz  # PyMuPDF
+
+# Import shared functions from gcs_utils
+from .gc_utils import (
+    get_storage_client,
+    validate_credentials,
+    check_bucket_exists,
+    upload_pdf_to_gcs,
+    download_file_from_gcs,
+    get_json_data_from_gcs
+)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, 
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-def get_storage_client(credentials_path: Optional[str] = None):
-    """Get a storage client using ADC or service account credentials"""
-    try:
-        if credentials_path and os.path.exists(credentials_path):
-            logger.info(f"Using service account credentials from: {credentials_path}")
-            return storage.Client.from_service_account_json(credentials_path)
-        else:
-            logger.info("Using Application Default Credentials")
-            return storage.Client()
-    except Exception as e:
-        logger.error(f"Error creating storage client: {str(e)}")
-        raise
 
 def get_predefined_colors() -> List[Tuple[float, float, float]]:
     """Return a list of predefined pastel colors for consistent subject highlighting"""
@@ -40,53 +34,46 @@ def get_predefined_colors() -> List[Tuple[float, float, float]]:
         (1.0, 0.9, 0.7),  # Light Orange
     ]
 
-def download_file_from_gcs(storage_client, bucket_name: str, blob_name: str) -> io.BytesIO:
-    """Download a file from GCS bucket as a BytesIO object"""
+def upload_highlighted_pdf_to_gcs(pdf_bytes: io.BytesIO, bucket_name: str, pdf_path: str, 
+                                  credentials_path: Optional[str] = None) -> str:
+    """Upload a highlighted PDF to GCS bucket"""
     try:
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
+        # Parse path components
+        path_parts = pdf_path.split('/')
+        if len(path_parts) >= 3:
+            user_id = path_parts[0]
+            course_id = path_parts[1]
+            file_name = path_parts[-1].rsplit('.', 1)[0] + '_highlighted.pdf'
+        else:
+            # Default structure if path doesn't match expected format
+            user_id = "default_user"
+            course_id = "default_course"
+            file_name = pdf_path.rsplit('/', 1)[-1].rsplit('.', 1)[0] + '_highlighted.pdf'
         
-        file_bytes = io.BytesIO()
-        blob.download_to_file(file_bytes)
-        file_bytes.seek(0)  # Reset pointer to beginning of file
+        # Reset file pointer and use the upload_pdf_to_gcs function
+        pdf_bytes.seek(0)
+        upload_success = upload_pdf_to_gcs(
+            file_obj=pdf_bytes,
+            bucket_name=bucket_name,
+            user_id=user_id,
+            course_id=course_id,
+            file_name=file_name,
+            credentials_path=credentials_path
+        )
         
-        logger.info(f"Downloaded {blob_name} from bucket {bucket_name}")
-        return file_bytes
+        if not upload_success:
+            raise Exception(f"Failed to upload highlighted PDF to {bucket_name}/{user_id}/{course_id}/{file_name}")
+        
+        highlighted_pdf_url = f"gs://{bucket_name}/{user_id}/{course_id}/{file_name}"
+        logger.info(f"Uploaded highlighted PDF to {highlighted_pdf_url}")
+        return highlighted_pdf_url
     except Exception as e:
-        logger.error(f"Error downloading file from GCS: {str(e)}")
+        logger.error(f"Error uploading highlighted PDF: {str(e)}")
         raise
 
-def upload_file_to_gcs(storage_client, bucket_name: str, blob_name: str, data: io.BytesIO) -> bool:
-    """Upload a file to GCS bucket"""
-    try:
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
-        
-        data.seek(0)  # Reset pointer to beginning of file
-        blob.upload_from_file(data, content_type='application/pdf')
-        
-        logger.info(f"Uploaded file to gs://{bucket_name}/{blob_name}")
-        return True
-    except Exception as e:
-        logger.error(f"Error uploading file to GCS: {str(e)}")
-        return False
-
-def get_json_data_from_gcs(storage_client, bucket_name: str, file_blob_name: str) -> Dict[str, Any]:
-    """Get JSON data from GCS bucket"""
-    try:
-        bucket = storage_client.bucket(bucket_name)
-        json_blob_name = file_blob_name.rsplit('.', 1)[0] + '.json'
-        blob = bucket.blob(json_blob_name)
-        
-        json_data = json.loads(blob.download_as_text())
-        logger.info(f"Downloaded and parsed JSON from {bucket_name}/{json_blob_name}")
-        return json_data
-    except Exception as e:
-        logger.error(f"Error getting JSON from GCS: {str(e)}")
-        raise
-
-def highlight_pdf_with_subjects(storage_client, bucket_name: str, pdf_blob_name: str, 
-                               json_data: Dict[str, Any]) -> Dict[str, Any]:
+def highlight_pdf_with_subjects(bucket_name: str, pdf_blob_name: str, 
+                                json_data: Dict[str, Any], 
+                                credentials_path: Optional[str] = None) -> Dict[str, Any]:
     """Add subject indicators to PDF pages where subjects are detected"""
     results = {
         "pdf_name": pdf_blob_name,
@@ -108,7 +95,7 @@ def highlight_pdf_with_subjects(storage_client, bucket_name: str, pdf_blob_name:
         subjects = [subject.get("subject") for subject in json_data.get("subjects", [])]
         
         # Download the PDF file
-        pdf_bytes = download_file_from_gcs(storage_client, bucket_name, pdf_blob_name)
+        pdf_bytes = download_file_from_gcs(bucket_name, pdf_blob_name, credentials_path)
         
         # Open the PDF with PyMuPDF
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -232,20 +219,20 @@ def highlight_pdf_with_subjects(storage_client, bucket_name: str, pdf_blob_name:
         doc.save(output_pdf)
         doc.close()
         
-        # Upload modified PDF back to GCS
-        marked_pdf_name = pdf_blob_name.rsplit('.', 1)[0] + '_subject_marked.pdf'
-        upload_success = upload_file_to_gcs(storage_client, bucket_name, marked_pdf_name, output_pdf)
-        
-        if not upload_success:
-            results["error"] = "Failed to upload marked PDF"
-            return results
+        # Upload modified PDF back to GCS using the function from uploadpdf.py
+        marked_pdf_url = upload_highlighted_pdf_to_gcs(
+            pdf_bytes=output_pdf,
+            bucket_name=bucket_name,
+            pdf_path=pdf_blob_name,
+            credentials_path=credentials_path
+        )
         
         # Reset buffer position for future reading
         output_pdf.seek(0)
         
         # Update results
         results["success"] = True
-        results["marked_pdf_url"] = f"gs://{bucket_name}/{marked_pdf_name}"
+        results["marked_pdf_url"] = marked_pdf_url
         results["marked_subjects"] = list(set().union(*page_subjects.values())) if page_subjects else []
         results["pdf_bytes"] = output_pdf  # Add PDF bytes to results
         
@@ -261,7 +248,6 @@ def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = N
     
     Args:
         pdf_path: Path to the PDF file in GCS (e.g. "folder/file.pdf")
-        json_path: Path to the JSON file in GCS (e.g. "folder/file.json")
         credentials_path: Optional path to GCP credentials file. If None, uses ADC.
         bucket_name: Name of the GCS bucket
         
@@ -273,7 +259,6 @@ def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = N
         - pdf_bytes: BytesIO object containing the marked PDF data
         - error: Error message if any
     """
-    json_path = pdf_path.rsplit('.', 1)[0] + '.json'
     results = {
         "success": False,
         "marked_pdf_url": "",
@@ -283,16 +268,29 @@ def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = N
     }
     
     try:
-        # Initialize storage client
-        storage_client = get_storage_client(credentials_path)
+        # Validate credentials
+        if not validate_credentials(credentials_path):
+            results["error"] = "Failed to validate credentials"
+            return results
         
-        # Get JSON data
+        # Check bucket exists
+        if not check_bucket_exists(bucket_name, credentials_path):
+            results["error"] = f"Cannot access bucket: {bucket_name}"
+            return results
+        
+        # Get JSON data - json path is derived from pdf_path
+        json_path = pdf_path.rsplit('.', 1)[0] + '.json'
         logger.info(f"Retrieving JSON data from GCS: {json_path}")
-        json_data = get_json_data_from_gcs(storage_client, bucket_name, json_path)
+        json_data = get_json_data_from_gcs(bucket_name, json_path, credentials_path)
         
         # Process the PDF
         logger.info(f"Processing PDF with subjects from JSON: {pdf_path}")
-        results = highlight_pdf_with_subjects(storage_client, bucket_name, pdf_path, json_data)
+        results = highlight_pdf_with_subjects(
+            bucket_name=bucket_name, 
+            pdf_blob_name=pdf_path, 
+            json_data=json_data,
+            credentials_path=credentials_path
+        )
         
         return results
         
@@ -302,8 +300,7 @@ def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = N
 
 if __name__ == "__main__":
     # Example usage
-    pdf_path = "john2/lec02_2_DecisionTrees_complete.pdf"
-    
+    pdf_path = "john2/cs101/lec02_2_DecisionTrees_complete.pdf"
     credentials_path = None
     
     # Log authentication method

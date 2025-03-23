@@ -55,7 +55,7 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
     
     try {
       const { data } = await apiService.get(`${API_URL}/materials/`);
-      setMaterials(data.materials);
+      setMaterials(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Failed to fetch materials. Please try again.");
       console.error("Error fetching materials:", err);
@@ -93,7 +93,7 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
       const { data } = await apiService.uploadFile(`${API_URL}/materials/`, formData);
       const newMaterial: ClassMaterial = data.class_material;
       
-      setMaterials(prev => [...prev, newMaterial]);
+      setMaterials(prev => Array.isArray(prev) ? [...prev, newMaterial] : [newMaterial]);
       
       //await refreshCourses();
       

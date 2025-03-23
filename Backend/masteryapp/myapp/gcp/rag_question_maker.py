@@ -159,7 +159,7 @@ class QuizMakerRAG:
             tools=[retrieval_tool]
         )
 
-    def generate_response(self, query: str, model: GenerativeModel, quiz_length: int) -> str:
+    def generate_response(self, query: str, model: GenerativeModel, quiz_length: int, options_per_question: int) -> str:
         """Generate a response using RAG"""
         try:
             if self.debug:
@@ -176,7 +176,7 @@ class QuizMakerRAG:
 
             Requirements:
             1. Create exactly one question for each entry in the data ({quiz_length} total questions)
-            2. Each question must be multiple choice with exactly 4 options
+            2. Each question must be multiple choice with exactly ${options_per_question} options
             3. Each question must have exactly one correct answer
             4. Reference the entry's ID in the snippet_id field
             5. Make questions challenging but fair

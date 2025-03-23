@@ -60,6 +60,9 @@ class QuizViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
+        now = timezone.now()
+        human_date = now.strftime("%d %B")
+        data['name'] = data.get('name', f'{human_date} quiz')
         serializer = QuizSerializer(data=data)
         if not serializer.is_valid():
             return Response({

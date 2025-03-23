@@ -33,6 +33,8 @@ from io import BytesIO
 from pdfminer.high_level import extract_text
 from ..gcp.rag_question_maker import QuizMakerRAG
 
+MAX_SNIPPET_MASTERY = 7
+
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer

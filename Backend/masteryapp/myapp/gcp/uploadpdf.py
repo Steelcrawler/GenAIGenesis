@@ -69,7 +69,7 @@ def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_nam
 
 
 def upload_and_process_pdf(file_obj, bucket_name: str, user_id: str, course_id: str, file_name: str,
-                        credentials_path: Optional[str] = None, existing_subjects: List[str] = None) -> Dict[str, Any]:
+                        credentials_path: Optional[str] = None, existing_subjects: list[str] = None) -> Dict[str, Any]:
     """End-to-end pipeline to upload a Django file object to GCS and process it
     
     Args:
@@ -191,6 +191,8 @@ def upload_process_and_highlight_pdf(file_obj, bucket_name: str, user_id: str, c
         return {
             "success": True,
             "pdf_name": file_name,
+            "subjects": results['subjects'],
+            "text_partitions": results['partitioned_text'],
             "highlighted_bytes": highlight_results['pdf_bytes'],
             "highlighted_pdf_url": highlight_results['marked_pdf_url']
         }

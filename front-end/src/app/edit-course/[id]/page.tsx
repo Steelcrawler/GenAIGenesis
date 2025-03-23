@@ -15,7 +15,7 @@ export default function EditCoursePage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto">
         <CourseForm courseId={id} />
       </div>
     </Layout>

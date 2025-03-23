@@ -12,8 +12,6 @@ interface ResultsSummaryProps {
 
 const ResultsSummary: React.FC<ResultsSummaryProps> = ({ result, onRetry }) => {
   const percentage = Math.round((result.correctAnswers / result.totalQuestions) * 100);
-  const minutes = Math.floor(result.timeTaken / 60);
-  const seconds = result.timeTaken % 60;
   
   let performance = "Try again!";
   let color = "text-red-500";
@@ -46,12 +44,6 @@ const ResultsSummary: React.FC<ResultsSummaryProps> = ({ result, onRetry }) => {
             <div className="text-left">
               <p className="text-sm text-muted-foreground">Score</p>
               <p className="text-2xl font-semibold">{percentage}%</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Time</p>
-              <p className="text-2xl font-semibold">
-                {minutes}:{seconds.toString().padStart(2, '0')}
-              </p>
             </div>
           </div>
           

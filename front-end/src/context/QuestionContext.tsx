@@ -17,7 +17,7 @@ export type QuestionType = "SHORT_ANSWER" | "MULTIPLE_ANSWER" | "MULTIPLE_CHOICE
 
 export type Question = {
   id: string;
-  quiz_id: string;
+  quiz: string;
   question: string;
   type: QuestionType;
   choices: string[];
@@ -65,7 +65,11 @@ export const QuestionProvider: React.FC<{ children: ReactNode }> = ({
   const getQuestion = (id: string) => questions ? questions.find((q) => q.id === id) :  undefined;
 
   const updateQuestions = (questions: Question[]) => {
-    setQuestions(prevQuestions => prevQuestions ? [...prevQuestions, ...questions] : [...questions]);
+    setQuestions(prevQuestions => {
+      const filterIds = questions.map(question => question.id!);
+      const filteredQuestions = prevQuestions?.filter(question => !filterIds.includes(question.id!));
+      return filteredQuestions ? [...filteredQuestions, ...questions] : [...questions];
+    });
   }
 
   return (

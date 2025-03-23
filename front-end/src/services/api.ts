@@ -57,6 +57,10 @@ export const apiService = {
     put(url: string, body: any, options: Omit<ApiOptions, "method"> = {}) {
       return this.fetch(url, { ...options, method: "PUT", body });
     },
+
+    patch(url: string, body: any, options: Omit<ApiOptions, "method"> = {}) {
+      return this.fetch(url, { ...options, method: "PATCH", body });
+    },
   
     delete(url: string, options: Omit<ApiOptions, "method"> = {}) {
       return this.fetch(url, { ...options, method: "DELETE" });

@@ -11,6 +11,12 @@ import React, {
 import { useAuth } from '@/context/AuthContext';
 import { apiService } from '@/services/api';
 import { QuestionType, useQuestions } from "@/context/QuestionContext";
+import { Response } from "./ResponseContext";
+
+type QuizSubmission = {
+  id: string;
+  responses: Response[];
+};
 
 type FakeQuestion = {
   id: string;
@@ -52,6 +58,8 @@ type QuizContextType = {
   
   getQuiz: (id: string) => Quiz | undefined;
   createQuiz: (quizData: Omit<Quiz, "id">) => Promise<Quiz | null>;
+  submitQuiz: ({id, responses}: QuizSubmission) => Promise<Quiz | null>;
+  
   getOpenQuizzes: () => Quiz[];
 };
 
@@ -89,10 +97,7 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
         ? { ...quizData, user: String(authState.userId) }
         : quizData;
         
-      console.log(finalData)
       const { data } = await apiService.post(`${API_URL}/quizzes/`, finalData);
-      console.log(`data`)
-      console.log(data)
       const newQuiz: Quiz = data.quiz;
       const questions = data.questions.map((question: FakeQuestion) => {
         return ({ 
@@ -103,7 +108,6 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
       console.log(questions)
       updateQuestions(questions);
       setCurrentQuiz(newQuiz);
-      console.log("Here3")
 
       setQuizzes((prev) => Array.isArray(prev) ? [newQuiz, ...prev] : [newQuiz]);
 
@@ -113,6 +117,34 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
       return null;
     }
   };
+
+  const submitQuiz = async ({id, responses}: QuizSubmission) => {
+    try {
+      const finalData = authState.userId
+        ? { questions: [...responses] }
+        : responses;
+        
+      console.log(finalData)
+      const { data } = await apiService.patch(`${API_URL}/quizzes/${id}/submit/`, finalData);
+      const updatedQuiz: Quiz = data.quiz;
+      const questions = data.questions.map((question: FakeQuestion) => {
+        return ({ 
+          ...question, 
+          choices: question.choices.split(';;/;;')
+        })
+      });
+      updateQuestions(questions);
+      setCurrentQuiz(updatedQuiz);
+      setQuizzes(prevQuizzes => {
+        const filteredQuizzes = prevQuizzes?.filter(quiz => quiz.id! !== updatedQuiz.id!);
+        return filteredQuizzes ? [...filteredQuizzes, updatedQuiz] : [updatedQuiz];
+      })
+      return updatedQuiz;
+    } catch (err) {
+      console.error("Error updating quiz:", err);
+      return null;
+    }
+  }
 
   const getOpenQuizzes = () => {
     return quizzes ? quizzes.filter(q => !q.completed_at) : [];
@@ -126,6 +158,7 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
         setCurrentQuiz,
         getQuiz,
         createQuiz,
+        submitQuiz,
         getOpenQuizzes,
       }}
     >

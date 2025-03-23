@@ -9,8 +9,7 @@ import { Question } from "@/context/QuestionContext";
     
     return {
       totalQuestions: questions.length,
-      correctAnswers,
-      timeTaken
+      correctAnswers
     };
   };
   
@@ -22,7 +21,7 @@ import { Question } from "@/context/QuestionContext";
   // Get default quiz config
   export const getDefaultQuizConfig = (): QuizConfig => {
     return {
-      length: 20,
+      length: 5,
       optionsPerQuestion: 4,
       course: "",
       subjects: [],

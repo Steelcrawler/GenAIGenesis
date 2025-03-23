@@ -1,6 +1,6 @@
 
 import React, { use, useState } from 'react';
-import type { Question } from '@/types/quiz';
+import type { Question } from '@/context/QuestionContext';
 import Button from './Button';
 import AnimatedTransition from './AnimatedTransition';
 import { cn } from '@/lib/utils';
@@ -9,12 +9,14 @@ interface QuizQuestionProps {
   question: Question;
   onAnswerSubmit: () => void;
   showFeedback?: boolean;
+  setSelectedIndex: (idx: number) => void;
 }
 
 const QuizQuestion: React.FC<QuizQuestionProps> = ({ 
   question, 
   onAnswerSubmit,
-  showFeedback = false
+  showFeedback = false,
+  setSelectedIndex
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [correctOption, setCorrectOption] = useState<string | null>(null);
@@ -37,12 +39,14 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     if (!selectedOption || isSubmitted) return;
     
     setIsSubmitted(true);
-    // TODO: setCorrectOption()
+    const index = question.choices.indexOf(selectedOption);
+    setSelectedIndex(index);
     
     // Wait for animation if showing feedback
     setTimeout(() => {
       onAnswerSubmit();
     }, showFeedback ? 1000 : 0);
+    setIsSubmitted(false)
   };
 
   const getOptionClassName = (optionId: string) => {

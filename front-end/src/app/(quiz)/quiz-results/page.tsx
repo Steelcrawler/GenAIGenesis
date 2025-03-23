@@ -6,40 +6,35 @@ import Navbar from '@/components/quiz/Navbar';
 import ResultsSummary from '@/components/quiz/ResultsSummary';
 import AnimatedTransition from '@/components/quiz/AnimatedTransition';
 import { QuizResult } from '@/types/quiz';
-import { getDefaultQuizConfig } from '@/utils/quizUtils';
+import { useCurrentCourse } from '@/context/CurrentCourseContext';
+import { useQuestions, Question } from '@/context/QuestionContext';
+import { useQuizzes } from '@/context/QuizViewContext';
 
 const Results = () => {
   const router = useRouter();
-  const [result, setResult] = useState<QuizResult | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [results, setResults] = useState<QuizResult | null>(null);
+  const { currentCourseId } = useCurrentCourse();
+  const { questions } = useQuestions();
+  const { currentQuiz } = useQuizzes();
 
   useEffect(() => {
-    const loadResults = () => {
-      try {
-        // Get result from backend
-        const savedResult = {
-            totalQuestions: 10,
-            correctAnswers: 8,
-            timeTaken: 100,
-        }; // TODO
-        if (!savedResult) {
-          // No results found, redirect to home
-          router.push("/courses")
-          return;
-        }
-        
-        setResult(savedResult);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error loading results:', error);
-        router.push("/courses")
-      }
-    };
+    if (!currentQuiz) {
+      // No results found, redirect to home
+      router.push("/courses")
+      return;
+    }
 
-    // Load with small delay for animation
-    const timer = setTimeout(loadResults, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    const filteredQuestions = questions?.filter(question => question.quiz === currentQuiz.id!) || [];
+    const newResults: QuizResult = {
+      totalQuestions: filteredQuestions.length,
+      correctAnswers: filteredQuestions.filter(question => question.is_correct).length
+    };
+    setResults(newResults);
+
+    setIsLoading(false);
+  }, []);  
 
   const handleRetry = () => {
     // Navigate to quiz page
@@ -60,7 +55,7 @@ const Results = () => {
             </div>
           ) : (
             <AnimatedTransition show={true} animation="scale">
-              {result && <ResultsSummary result={result} onRetry={handleRetry} />}
+              {results && <ResultsSummary result={results!} onRetry={handleRetry} />}
             </AnimatedTransition>
           )}
         </div>

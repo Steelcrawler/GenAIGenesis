@@ -6,6 +6,16 @@ from google.cloud.exceptions import NotFound, Forbidden
 from pdf_sectioner import PDFProcessor
 from google.auth import default
 from pdf_highlighting import process_pdf_with_subjects
+from gc_utils import (
+    get_storage_client,
+    validate_credentials,
+    check_bucket_exists,
+    upload_pdf_to_gcs,
+    check_user_folder_exists,
+    create_user_folder_in_gcs,
+    download_file_from_gcs,
+    get_json_data_from_gcs
+)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, 

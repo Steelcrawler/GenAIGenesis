@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { useCourses, Course } from "@/context/CourseContext";
-import { ClassMaterial, useMaterials } from "@/context/ClassMaterialContext";
+import { ClassMaterial } from "@/context/ClassMaterialContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Course name is required"),
@@ -39,15 +39,21 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
   const existingCourse = courseId ? getCourse(courseId) : undefined;
   const isEditing = !!existingCourse;
 
+  // État pour stocker les champs du formulaire
   const [formData, setFormData] = useState<Partial<Course>>({
     name: existingCourse?.name || "",
     description: existingCourse?.description || "",
     material: existingCourse?.material || [],
   });
 
+  // État pour gérer les erreurs de validation
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  // État pour gérer si le formulaire est en cours de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // État pour afficher le loader de création des matériaux
+  const [showMaterialsLoading, setShowMaterialsLoading] = useState(false);
 
+  // Convertit un fichier en base64 (facultatif selon votre logique)
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -59,18 +65,19 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
       reader.readAsDataURL(file);
     });
 
+  // Gère l'ajout de fichiers
   const handleFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const filesArray = Array.from(e.target.files);
 
     try {
       const filePromises = filesArray.map(async (file) => {
-        const dataUrl = await fileToBase64(file);
+        await fileToBase64(file); // Conversion en base64 si besoin
         const courseFile: ClassMaterial = {
           id: uuidv4(),
           file_name: file.name,
           local_file: file,
-          course: courseId || "", 
+          course: courseId || "",
         };
         return courseFile;
       });
@@ -87,6 +94,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     }
   };
 
+  // Retire un fichier du tableau
   const handleRemoveFile = (fileId: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -94,6 +102,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     }));
   };
 
+  // Gestion du changement de champ (nom, description, etc.)
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -109,20 +118,28 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     }
   };
 
+  // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      // Validation via Zod
       const validatedData = formSchema.parse(formData);
 
       if (isEditing && courseId) {
+        // Cas d'édition : on update le cours
         await updateCourse(courseId, validatedData);
         toast.success("Course updated successfully");
         router.push(`/course/${courseId}`);
-      }
-      else {
-        await addCourse(validatedData as Omit<Course, "id" | "created_at">);
+      } else {
+        // Cas de création : on ajoute le cours
+        // et on utilise nos callbacks pour l'affichage du loader des matériaux
+        await addCourse(
+          validatedData as Omit<Course, "id" | "created_at">,
+          () => setShowMaterialsLoading(true),   // onMaterialsUploadStart
+          () => setShowMaterialsLoading(false)   // onMaterialsUploadEnd
+        );
         toast.success("Course created successfully");
         router.push("/courses");
       }
@@ -147,7 +164,12 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Button variant="ghost" className="mb-6 gap-2" onClick={() => router.push("/courses")}>
+      {/* Bouton "Back" */}
+      <Button
+        variant="ghost"
+        className="mb-6 gap-2"
+        onClick={() => router.push("/courses")}
+      >
         <ArrowLeft className="h-4 w-4" />
         <span>Back</span>
       </Button>
@@ -158,6 +180,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Nom du cours */}
           <div className="space-y-2">
             <Label htmlFor="name">Course Name</Label>
             <Input
@@ -168,9 +191,12 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
               className={errors.name ? "border-destructive" : ""}
               disabled={isSubmitting}
             />
-            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name}</p>
+            )}
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -187,36 +213,38 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="files">Upload Files (PDF, images, etc.)</Label>
-            <Input
-              id="files"
-              type="file"
-              multiple
-              onChange={handleFilesChange}
-              disabled={isSubmitting}
-            />
-            {errors.files && (
-              <p className="text-sm text-destructive">{errors.files}</p>
-            )}
+          {!isEditing && (
+  <div className="space-y-2">
+    <Label htmlFor="files">Upload Files (PDF, images, etc.)</Label>
+    <Input
+      id="files"
+      type="file"
+      multiple
+      onChange={handleFilesChange}
+      disabled={isSubmitting}
+    />
+    {errors.files && (
+      <p className="text-sm text-destructive">{errors.files}</p>
+    )}
 
-            {formData.material && formData.material.length > 0 && (
-              <ul className="mt-4 space-y-1 text-sm">
-                {formData.material.map((file) => (
-                  <li key={file.id} className="flex items-center gap-2">
-                    • {file.file_name}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFile(file.id!)}
-                      className="text-destructive text-xs hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+    {formData.material && formData.material.length > 0 && (
+      <ul className="mt-4 space-y-1 text-sm">
+        {formData.material.map((file) => (
+          <li key={file.id} className="flex items-center gap-2">
+            • {file.file_name}
+            <button
+              type="button"
+              onClick={() => handleRemoveFile(file.id!)}
+              className="text-destructive text-xs hover:underline"
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+)}
 
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting} className="gap-2">
@@ -226,6 +254,17 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
           </div>
         </form>
       </div>
+
+      {showMaterialsLoading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-10 z-50">
+          <div className="bg-white p-6 rounded shadow-lg flex flex-col items-center gap-4">
+            <Loader2 className="animate-spin h-6 w-6" />
+            <p className="text-lg font-medium">
+              Uploading files...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

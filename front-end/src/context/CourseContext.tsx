@@ -34,7 +34,7 @@ type CourseContextType = {
   
   setSearchTerm: (value: string) => void;
   getCourse: (id: string) => Course | undefined;
-  addCourse: (courseData: Omit<Course, "id">) => Promise<Course | null>;
+  addCourse: (courseData: Omit<Course, "id">, onMaterialsUploadStart?: () => void, onMaterialsUploadEnd?: () => void) => Promise<Course | null>;
   updateCourse: (id: string, courseData: Partial<Course>) => Promise<Course | null>;
   deleteCourse: (id: string) => Promise<boolean>;
   refreshCourses: () => Promise<void>;
@@ -85,7 +85,7 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({
 
   const getCourse = (id: string) => courses.find((c) => c.id === id);
 
-  const addCourse = async (courseData: Omit<Course, "id">) => {
+  const addCourse = async (courseData: Omit<Course, "id">, onMaterialsUploadStart?: () => void, onMaterialsUploadEnd?: () => void) => {
     setLoading(true);
     setError(null);
     
@@ -100,7 +100,9 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({
       const material = courseData.material;
       if (material && material.length > 0) {
         for(const mat of material) {
-          materialState.createMaterial(mat, newCourse.id);
+          onMaterialsUploadStart?.();
+          await materialState.createMaterial(mat, newCourse.id);
+          onMaterialsUploadEnd?.();
           };
         }
       

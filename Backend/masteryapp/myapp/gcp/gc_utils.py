@@ -138,7 +138,7 @@ def get_pdf_bytes_from_gcs(bucket_name: str, user_id: str, course_id: str, file_
     try:
         storage_client = get_storage_client(credentials_path)
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(f"{user_id}/{course_id}/{file_name}")
+        blob = bucket.blob(f"{user_id}/{course_id}/{file_name}_highlighted.pdf")
         return blob.download_as_bytes()
     except Exception as e:
         logger.error(f"Error getting PDF bytes from GCS: {str(e)}")

@@ -21,6 +21,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             return Course.objects.filter(user=self.request.user)
         return Course.objects.none()
+
     
     def get(self, request, *args, **kwargs):
         id_param = kwargs.get('pk')

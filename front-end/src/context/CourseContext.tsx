@@ -60,7 +60,8 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({
   
     try {
       const { data } = await apiService.get(`${API_URL}/courses/`);
-      setCourses(Array.isArray(data.courses) ? data.courses : []);
+      console.log(data);
+      setCourses(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Failed to fetch courses. Please try again.");
       console.error("Error fetching courses:", err);

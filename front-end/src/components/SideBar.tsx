@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ChevronLeft,
   FolderOpen,
   Loader2,
   Plus,
   Search,
+  Trash,
   Upload,
 } from "lucide-react";
 import { useCourses } from "@/context/CourseContext";
@@ -24,12 +25,13 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const { filteredCourses, searchTerm, setSearchTerm } = useCourses();
-  const { getMaterialsByCourse, createMaterial } = useMaterials();
-  // ↑^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  // Get createMaterial at the top level, outside the .map
+  const { getMaterialsByCourse, createMaterial, deleteMaterial } = useMaterials();
+
 
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+
   const [uploadingCourseId, setUploadingCourseId] = useState<string | null>(
     null
   );
@@ -137,9 +139,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                         isActive && "border-l-4 border-black",
                         isExpanded && "bg-sidebar-accent"
                       )}
-                      onClick={() =>
-                        setExpandedCourseId(isExpanded ? null : course.id)
-                      }
+                      onClick={() => {
+                        setExpandedCourseId(isExpanded ? null : course.id);
+                        router.push(`/course/${course.id}`)
+                      }}
                     >
                       <ChevronLeft
                         className={cn(
@@ -169,17 +172,25 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
                     {isExpanded && courseMaterials.length > 0 && (
                       <ul className="ml-6 mt-1 space-y-1 text-sm">
-                        {courseMaterials.map((material) => (
-                          <li key={material.id}>
-                            <Link
-                              href={`/file/${material.id}`}
-                              className="text-foreground hover:underline"
-                            >
-                              {material.file_name.split("/").pop()}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                      {courseMaterials.map((material) => (
+                        <li key={material.id} className="flex items-center justify-between group">
+                          <Link
+                            href={`/file/${material.id}`}
+                            className="text-foreground hover:underline truncate max-w-[170px]"
+                          >
+                            {material.file_name.split("/").pop()}
+                          </Link>
+                    
+                          <button
+                            onClick={() => deleteMaterial(material.id!)}
+                            className="cursor-pointer text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                            title="Delete file"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                     )}
                     {isExpanded && courseMaterials.length === 0 && (
                       <p className="ml-6 mt-1 text-xs text-muted-foreground">
@@ -197,7 +208,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           )}
         </nav>
 
-        {/* Footer: New Course Button */}
         <div className="border-t border-sidebar-border p-4">
           <Link href="/new-course">
             <Button className="w-full gap-2 cursor-pointer">

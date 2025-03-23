@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
@@ -16,6 +16,7 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 const formSchema = z.object({
   name: z.string().min(1, "Course name is required"),
   description: z.string().min(1, "Description is required"),
+  image_path: z.string().url("Invalid image URL").optional(),
   material: z
     .array(
       z.object({
@@ -39,12 +40,31 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
   const existingCourse = courseId ? getCourse(courseId) : undefined;
   const isEditing = !!existingCourse;
 
+  const [previewImage, setPreviewImage] = useState<string | undefined>(
+    existingCourse?.image_path || undefined
+  );
+  const [imageError, setImageError] = useState(false);
+
   // État pour stocker les champs du formulaire
   const [formData, setFormData] = useState<Partial<Course>>({
     name: existingCourse?.name || "",
     description: existingCourse?.description || "",
+    image_path: existingCourse?.image_path || "",
     material: existingCourse?.material || [],
   });
+
+  useEffect(() => {
+    if (formData.image_path) {
+      setPreviewImage(formData.image_path);
+      setImageError(false);
+    } else {
+      setPreviewImage(undefined);
+    }
+  }, [formData.image_path]);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   // État pour gérer les erreurs de validation
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -133,12 +153,10 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
         toast.success("Course updated successfully");
         router.push(`/course/${courseId}`);
       } else {
-        // Cas de création : on ajoute le cours
-        // et on utilise nos callbacks pour l'affichage du loader des matériaux
         await addCourse(
           validatedData as Omit<Course, "id" | "created_at">,
-          () => setShowMaterialsLoading(true),   // onMaterialsUploadStart
-          () => setShowMaterialsLoading(false)   // onMaterialsUploadEnd
+          () => setShowMaterialsLoading(true),
+          () => setShowMaterialsLoading(false)
         );
         toast.success("Course created successfully");
         router.push("/courses");
@@ -213,38 +231,74 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
             )}
           </div>
 
-          {!isEditing && (
-  <div className="space-y-2">
-    <Label htmlFor="files">Upload Files (PDF, images, etc.)</Label>
-    <Input
-      id="files"
-      type="file"
-      multiple
-      onChange={handleFilesChange}
-      disabled={isSubmitting}
-    />
-    {errors.files && (
-      <p className="text-sm text-destructive">{errors.files}</p>
-    )}
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="image_path">Image URL (Optional)</Label>
+            <Input
+              id="image_path"
+              name="image_path"
+              value={formData.image_path || ""}
+              onChange={handleChange}
+              placeholder="https://example.com/image.jpg"
+              disabled={isSubmitting}
+            />
+            {errors.image_path && (
+              <p className="text-sm text-destructive">{errors.image_path}</p>
+            )}
 
-    {formData.material && formData.material.length > 0 && (
-      <ul className="mt-4 space-y-1 text-sm">
-        {formData.material.map((file) => (
-          <li key={file.id} className="flex items-center gap-2">
-            • {file.file_name}
-            <button
-              type="button"
-              onClick={() => handleRemoveFile(file.id!)}
-              className="text-destructive text-xs hover:underline"
-            >
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-)}
+            {previewImage && !imageError && (
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Image Preview
+                </p>
+                <div className="relative w-full h-48 rounded-md overflow-hidden border bg-background">
+                  <img
+                    src={previewImage}
+                    alt="Course preview"
+                    className="w-full h-full object-cover"
+                    onError={handleImageError}
+                  />
+                </div>
+              </div>
+            )}
+            {imageError && previewImage && (
+              <p className="text-sm text-destructive mt-2">
+                Failed to load image. Please check the URL and try again.
+              </p>
+            )}
+          </div>
+
+          {!isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="files">Upload Files (PDF, images, etc.)</Label>
+              <Input
+                id="files"
+                type="file"
+                multiple
+                onChange={handleFilesChange}
+                disabled={isSubmitting}
+              />
+              {errors.files && (
+                <p className="text-sm text-destructive">{errors.files}</p>
+              )}
+
+              {formData.material && formData.material.length > 0 && (
+                <ul className="mt-4 space-y-1 text-sm">
+                  {formData.material.map((file) => (
+                    <li key={file.id} className="flex items-center gap-2">
+                      • {file.file_name}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(file.id!)}
+                        className="text-destructive text-xs hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting} className="gap-2">
@@ -259,9 +313,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-10 z-50">
           <div className="bg-white p-6 rounded shadow-lg flex flex-col items-center gap-4">
             <Loader2 className="animate-spin h-6 w-6" />
-            <p className="text-lg font-medium">
-              Uploading files...
-            </p>
+            <p className="text-lg font-medium">Uploading files...</p>
           </div>
         </div>
       )}

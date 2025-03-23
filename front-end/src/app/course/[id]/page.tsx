@@ -16,21 +16,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCourses } from "@/context/CourseContext";
 import Layout from "@/components/Layout";
-import { ArrowLeft, Calendar, Clock, Edit, Trash } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import QuizPopup from "@/components/quiz-popup";
+import SubjectMasteryContainer from "@/components/SubjectMasteryContainer";
+import { useCurrentCourse } from "@/context/CurrentCourseContext";
 
 export default function CourseDetail() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
   const { getCourse, deleteCourse } = useCourses();
+  const { setCurrentCourseId } = useCurrentCourse();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [showQuizPopup, setShowQuizPopup] = useState(false);
 
+  const handleQuizStart = () => {
+    setCurrentCourseId(id);
+    console.log(id)
+    router.push("/quiz-config");
+  }
 
   const course = getCourse(id);
 
@@ -118,9 +124,9 @@ export default function CourseDetail() {
               </Button>
             </div>
             <Button
-            className="mt-15 w-full gap-2 cursor-pointer bg-blue-600 hover:bg-blue-600/80 text-white"
-            onClick={() => setShowQuizPopup(true)}
-          >
+              className="mt-15 w-full gap-2 cursor-pointer bg-blue-600 hover:bg-blue-600/80 text-white"
+              onClick={handleQuizStart}
+            >
             <span role="img" aria-label="play">►</span> Start Quiz
           </Button>
           </div>
@@ -145,6 +151,11 @@ export default function CourseDetail() {
                   <p className="text-muted-foreground whitespace-pre-line">
                     {course.description}
                   </p>
+                  
+                  {/* Add the SubjectMasteryTag component here */}
+                  <div className="mt-4">
+                    <SubjectMasteryContainer />
+                  </div>
                 </div>
               </div>
             </div>
@@ -174,19 +185,6 @@ export default function CourseDetail() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-
-      {showQuizPopup && (
-  <QuizPopup
-    handleCancel={() => setShowQuizPopup(false)}
-    courses={[
-      {
-        id: course.id,
-        label: course.name,
-        pdfs: [{ id: '1', label: 'PDF 1' }]
-      },
-    ]}
-  />
-)}
     </Layout>
   );
 }

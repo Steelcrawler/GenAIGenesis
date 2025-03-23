@@ -109,8 +109,8 @@ class QuizViewSet(viewsets.ModelViewSet):
         for snippet in selected_snippets:
             counter+=1
             data_list.append({
-                'id' : snippet.id,
-                'snippet' : snippet.snippet,
+                'id' : str(snippet.id),
+                'snippet' : str(snippet.snippet),
                 'commented_count_helper': counter,
             })
         

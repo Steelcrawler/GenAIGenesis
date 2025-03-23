@@ -29,7 +29,6 @@ from ..serializers.subject_serializer import SubjectSerializer
 from ..models.material_snippet import MaterialSnippet
 
 from io import BytesIO
-from pdfminer.high_level import extract_text
 from ..gcp.rag_question_maker import QuizMakerRAG
 
 class SubjectViewset(viewsets.ModelViewSet):

@@ -38,26 +38,21 @@ class SubjectViewset(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     
-    def get(self, request, *args, **kwargs):
-        pk = kwargs.get('pk', None)
-        if pk:
-            question = get_object_or_404(Subject, pk=pk)
-            return Response({
-                'subject' : Subject(question).data
-            },
-                            status=status.HTTP_200_OK)
-            
-        course_id = self.request.query_params.get('course_id')
-        
+    def retrieve(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        subject = get_object_or_404(Subject, pk=pk)
+        serializer = self.get_serializer(subject)
+        return Response({'subject': serializer.data}, status=status.HTTP_200_OK)
+
+    def list(self, request, *args, **kwargs):
+        course_id = request.query_params.get('course_id')
         if course_id:
             queryset = Subject.objects.filter(course_id=course_id)
         else:
-            queryset = Subject.objects.filter(course__user=self.request.user)
-        serializer = self.get_serializer(queryset, manyr=True)
-        return Response({
-            'subjects': serializer.data
-        }, status=status.HTTP_200_OK)
-    
+            queryset = Subject.objects.filter(course__user=request.user)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'subjects': serializer.data}, status=status.HTTP_200_OK)
+
 
 
             

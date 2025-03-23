@@ -38,25 +38,21 @@ class QuestionViewset(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     
-    def get(self, request, *args, **kwargs):
-        pk = kwargs.get('pk', None)
-        if pk:
-            question = get_object_or_404(Question, pk=pk)
-            return Response({
-                'question' : Question(question).data
-            },
-                            status=status.HTTP_200_OK)
-            
-        quiz_id = self.request.query_params.get('quiz_id')
-        
+    def retrieve(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        question = get_object_or_404(Question, pk=pk)
+        serializer = self.get_serializer(question)
+        return Response({'question': serializer.data}, status=status.HTTP_200_OK)
+
+    def list(self, request, *args, **kwargs):
+        quiz_id = request.query_params.get('quiz_id')
         if quiz_id:
             queryset = Question.objects.filter(quiz_id=quiz_id)
         else:
-            queryset = Question.objects.filter(quiz__user=self.request.user)
-        serializer = self.get_serializer(queryset, manyr=True)
-        return Response({
-            'questions': serializer.data
-        }, status=status.HTTP_200_OK)
+            queryset = Question.objects.filter(quiz__user=request.user)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'questions': serializer.data}, status=status.HTTP_200_OK)
+
     
 
 

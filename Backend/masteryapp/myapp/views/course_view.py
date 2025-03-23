@@ -23,25 +23,21 @@ class CourseViewSet(viewsets.ModelViewSet):
         return Course.objects.none()
 
     
-    def get(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         id_param = kwargs.get('pk')
-        if id_param:
-            try:
-                client = Course.objects.get(pk=id_param)
-                serializer = self.get_serializer(client)
-                return Response({
-                    'course' : serializer.data
-                },
-                                status=status.HTTP_200_OK)
-            except Course.DoesNotExist:
-                return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            queryset = Course.objects.filter(user=request.user)
-            serializer = self.get_serializer(queryset, many=True)
-            return Response({
-                'courses' : serializer.data
-            },
-                            status=status.HTTP_200_OK)
+        try:
+            course = Course.objects.get(pk=id_param)
+            serializer = self.get_serializer(course)
+            return Response({'course': serializer.data}, status=status.HTTP_200_OK)
+        except Course.DoesNotExist:
+            return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+    def list(self, request, *args, **kwargs):
+        queryset = Course.objects.filter(user=request.user)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'courses': serializer.data}, status=status.HTTP_200_OK)
+
             
 
 

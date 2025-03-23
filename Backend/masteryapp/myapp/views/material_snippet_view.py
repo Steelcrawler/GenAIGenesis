@@ -23,25 +23,20 @@ class MaterialSnippetViewset(viewsets.ModelViewSet):
             return MaterialSnippetSerializer.objects.filter(class_material__course__user=self.request.user)
         return MaterialSnippet.objects.none()
 
-    def get(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         id_param = kwargs.get('pk')
-        if id_param:
-            try:
-                client = MaterialSnippet.objects.get(pk=id_param)
-                serializer = self.get_serializer(client)
-                return Response({
-                    'material_snippet' : serializer.data
-                },
-                                status=status.HTTP_200_OK)
-            except MaterialSnippet.DoesNotExist:
-                return Response({"error": "Snippet not found"}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            queryset = self.get_queryset()
-            serializer = self.get_serializer(queryset, many=True)
-            return Response({
-                'material_snippets' : serializer.data
-            },
-                            status=status.HTTP_200_OK)
+        try:
+            snippet = MaterialSnippet.objects.get(pk=id_param)
+            serializer = self.get_serializer(snippet)
+            return Response({'material_snippet': serializer.data}, status=status.HTTP_200_OK)
+        except MaterialSnippet.DoesNotExist:
+            return Response({"error": "Snippet not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'material_snippets': serializer.data}, status=status.HTTP_200_OK)
+
             
     
     

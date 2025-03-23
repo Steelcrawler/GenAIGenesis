@@ -15,6 +15,7 @@ export type Subject = {
   id: string;
   name: string;
   course: string;
+  mastery: number;
 };
 
 type SubjectContextType = {

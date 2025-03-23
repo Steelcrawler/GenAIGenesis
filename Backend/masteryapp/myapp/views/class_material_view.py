@@ -143,6 +143,6 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
             
         return Response({
             'class_material' : ClassMaterialSerializer(new_material).data,
-            'subjects' : SubjectSerializer(final_subjects, many=True).data,
+            'subjects' : SubjectSerializer(final_subjects, many=True, context={'request': request}).data,
             'material_snippets' : MaterialSnippetSerializer(final_snippets, many=True).data,
         }, status=status.HTTP_201_CREATED)

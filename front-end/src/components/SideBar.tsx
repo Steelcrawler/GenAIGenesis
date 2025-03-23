@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-<<<<<<< HEAD
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronLeft, FolderOpen, Plus, Search } from "lucide-react";
-=======
-import { usePathname } from "next/navigation";
 import {
   ChevronLeft,
   FolderOpen,
@@ -16,7 +12,6 @@ import {
   Trash,
   Upload,
 } from "lucide-react";
->>>>>>> 1c0161ca41f51e1ba5a2a51a8f48731418f6ec8c
 import { useCourses } from "@/context/CourseContext";
 import { useMaterials } from "@/context/ClassMaterialContext";
 import { Button } from "@/components/ui/button";
@@ -35,14 +30,11 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-<<<<<<< HEAD
   const router = useRouter();
 
-=======
   const [uploadingCourseId, setUploadingCourseId] = useState<string | null>(
     null
   );
->>>>>>> 1c0161ca41f51e1ba5a2a51a8f48731418f6ec8c
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
   useEffect(() => {

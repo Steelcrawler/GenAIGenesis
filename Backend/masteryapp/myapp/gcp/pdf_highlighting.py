@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Tuple, Optional
 import fitz  # PyMuPDF
 
 # Import shared functions from gcs_utils
-from gc_utils import (
+from .gc_utils import (
     get_storage_client,
     validate_credentials,
     check_bucket_exists,

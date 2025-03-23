@@ -3,10 +3,10 @@ import logging
 from typing import Dict, Any, Optional
 from google.cloud import storage
 from google.cloud.exceptions import NotFound, Forbidden
-from pdf_sectioner import PDFProcessor
+from .pdf_sectioner import PDFProcessor
 from google.auth import default
-from pdf_highlighting import process_pdf_with_subjects
-from gc_utils import (
+from .pdf_highlighting import process_pdf_with_subjects
+from .gc_utils import (
     get_storage_client,
     validate_credentials,
     check_bucket_exists,

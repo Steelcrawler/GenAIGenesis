@@ -23,6 +23,7 @@ from ..serializers.course_serializer import CourseSerializer
 from ..serializers.material_snippet_serializer import MaterialSnippetSerializer
 from ..auth_backends import CsrfExemptSessionAuthentication
 from rest_framework.authentication import BasicAuthentication
+from ..gcp.gc_utils import get_pdf_bytes_from_gcs
 
 
 from io import BytesIO
@@ -37,8 +38,15 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
         pk = kwargs.get('pk', None)
         if pk:
             class_material = get_object_or_404(ClassMaterial, pk=pk)
+            file_bytes = get_pdf_bytes_from_gcs(
+                bucket_name="educatorgenai",
+                user_id=request.user.id,
+                course_id=class_material.course.id,
+                blob_name=class_material.file_name,
+            )
             return Response({
-                'class_material' : ClassMaterialSerializer(class_material).data
+                'class_material' : ClassMaterialSerializer(class_material).data,
+                'file' : file_bytes
             },
                             status=status.HTTP_200_OK)
             

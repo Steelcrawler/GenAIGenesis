@@ -21,6 +21,7 @@ def signup_view(request):
             {'detail': f'User created successfully. Welcome, {user}'},
             status=status.HTTP_201_CREATED
         )
+    print('Signup errors:', serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name='dispatch')

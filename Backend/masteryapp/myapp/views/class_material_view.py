@@ -55,7 +55,9 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
     
     @transaction.atomic
     def create(self, request, *args, **kwargs):
-        data = request.data.copy()
+        print('request.data: ', request.data)
+        data = request.data
+        print('data: ', data)
 
         material_raw = json.loads(data['material'])
 
@@ -66,7 +68,7 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
         
         existing_subjects_qs = Subject.objects.filter(course__id=course_id)
         existing_subjects = {str(subcat.name.lower()): subcat for subcat in existing_subjects_qs}
-        
+        print('user_id: ', str(request.user.id))
         parse_result = upload_and_process_pdf(file_obj=pdf_file, 
                                               bucket_name="educatorgenai", 
                                               user_id=str(request.user.id),
@@ -103,7 +105,10 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
             weight=material_raw.get('weight', 1),
         )
         
-        for target_subject, snippet in all_partitions.items():
+        for item in all_partitions:
+            print('item: ', item)
+            target_subject = item['subject']
+            snippet = item['text']
             if not target_subject.lower() in existing_subjects.keys():
                 return Response({
                     'error' : 'Internal parse suggested inexisting subject.'

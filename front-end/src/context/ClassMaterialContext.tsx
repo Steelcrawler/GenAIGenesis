@@ -31,6 +31,7 @@ type MaterialContextType = {
   
   setSearchTerm: (value: string) => void;
   getMaterial: (id: string) => ClassMaterial | undefined;
+  getMaterialRequest: (id: string) => Promise<{ class_material: ClassMaterial; file: string } | null>;
   getMaterialsByCourse: (courseId: string) => ClassMaterial[];
   createMaterial: (materialData: ClassMaterial, courseId: string) => Promise<ClassMaterial | null>;
   deleteMaterial: (id: string) => Promise<boolean>;
@@ -43,7 +44,7 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
   children, onMaterialChange
 }) => {
   const [materials, setMaterials] = useState<ClassMaterial[]>([]);
-  const [materialTest, setMaterialTest] = useState<ClassMaterial>();
+  //const [materialTest, setMaterialTest] = useState<ClassMaterial>();
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +79,18 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
   
   const getMaterialsByCourse = (courseId: string) => 
     materials.filter(m => m.course === courseId);
+
+  const getMaterialRequest = async (id: string): Promise<{ class_material: ClassMaterial; file: string } | null> => {
+    try {
+      const { data } = await apiService.get(`${API_URL}/materials/${id}/`);
+      return data;
+    } catch (err) {
+      setError("Failed to fetch material. Please try again.");
+      console.error("Error fetching material:", err);
+      return null;
+    }
+  }
+  
 
   const createMaterial = async (
     materialData: ClassMaterial, courseId: string
@@ -136,13 +149,13 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
     <MaterialContext.Provider
       value={{
         materials,
-        
         searchTerm,
         loading,
         error,
         setSearchTerm,
         getMaterial,
         getMaterialsByCourse,
+        getMaterialRequest,
         createMaterial,
         deleteMaterial,
         refreshMaterials,

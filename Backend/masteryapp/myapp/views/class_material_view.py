@@ -24,6 +24,7 @@ from ..serializers.material_snippet_serializer import MaterialSnippetSerializer
 from ..auth_backends import CsrfExemptSessionAuthentication
 from rest_framework.authentication import BasicAuthentication
 from ..gcp.gc_utils import get_pdf_bytes_from_gcs
+import base64
 
 
 from io import BytesIO
@@ -46,10 +47,11 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
             course_id=class_material.course.id,
             blob_name=class_material.file_name.split('/').pop(),
         )
+        encoded_file = base64.b64encode(file_bytes).decode('utf-8')
         print('Received detailed request, sending data: ')
         return Response({
             'class_material' : ClassMaterialSerializer(class_material).data,
-            'file' : file_bytes
+            'file' : encoded_file
         },
                         status=status.HTTP_200_OK)
     

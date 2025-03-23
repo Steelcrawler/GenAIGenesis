@@ -31,7 +31,7 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
     queryset = ClassMaterial.objects.all()
     serializer_class = ClassMaterialSerializer
     authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
-    
+    permission_classes = [IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
         pk = kwargs.get('pk', None)

@@ -152,9 +152,8 @@ export default function CourseDetail() {
                     {course.description}
                   </p>
                   
-                  {/* Add the SubjectMasteryTag component here */}
                   <div className="mt-4">
-                    <SubjectMasteryContainer />
+                    <SubjectMasteryContainer courseId={id}/>
                   </div>
                 </div>
               </div>

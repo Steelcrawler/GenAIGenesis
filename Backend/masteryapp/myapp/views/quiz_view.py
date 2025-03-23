@@ -189,8 +189,9 @@ class QuizViewSet(viewsets.ModelViewSet):
         for submit_question in submitted_questions:
             #TODO : More than just multiple answer questions!
             attempted_answer = submit_question['single_choice']
-            print(f"Trying to find question with id: {submit_question['id']}")
+            #print(f"Trying to find question with id: {submit_question['id']}")
             question: Question = quiz_questions_dict[submit_question['id']]
+            question.attempted_single_choice = attempted_answer
             question.is_correct = int(attempted_answer) == question.single_correct_choice
             question.save()
         

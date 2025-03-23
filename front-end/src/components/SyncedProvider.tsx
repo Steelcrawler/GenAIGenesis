@@ -7,6 +7,7 @@ import { QuizProvider } from "@/context/QuizViewContext";
 import { CurrentCourseProvider } from "@/context/CurrentCourseContext";
 import { QuestionProvider } from "@/context/QuestionContext";
 import { SubjectProvider } from "@/context/SubjectContext";
+import {MaterialSnippetProvider} from "@/context/MaterialSnippetContext";
 
 export const SyncedProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <QuestionProvider>
@@ -15,7 +16,9 @@ export const SyncedProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         <MaterialProvider>
           <CourseProvider>
             <SubjectProvider>
-              {children}
+              <MaterialSnippetProvider>
+                {children}
+              </MaterialSnippetProvider>
             </SubjectProvider>
           </CourseProvider>
         </MaterialProvider>

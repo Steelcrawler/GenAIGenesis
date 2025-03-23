@@ -14,6 +14,19 @@ logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+def get_storage_client(credentials_path: Optional[str] = None):
+    """Get a storage client using ADC or service account credentials"""
+    try:
+        if credentials_path and os.path.exists(credentials_path):
+            logger.info(f"Using service account credentials from: {credentials_path}")
+            return storage.Client.from_service_account_json(credentials_path)
+        else:
+            logger.info("Using Application Default Credentials")
+            return storage.Client()
+    except Exception as e:
+        logger.error(f"Error creating storage client: {str(e)}")
+        raise
+
 def get_predefined_colors() -> List[Tuple[float, float, float]]:
     """Return a list of predefined pastel colors for consistent subject highlighting"""
     return [
@@ -75,17 +88,7 @@ def get_json_data_from_gcs(storage_client, bucket_name: str, json_blob_name: str
 
 def highlight_pdf_with_subjects(storage_client, bucket_name: str, pdf_blob_name: str, 
                                json_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Add subject indicators to PDF pages where subjects are detected
-    
-    Args:
-        storage_client: GCS storage client
-        bucket_name: Name of the GCS bucket
-        pdf_blob_name: Name of the PDF blob in the bucket
-        json_data: Dictionary with processing results, including subjects and partitioned text
-        
-    Returns:
-        Dictionary with results
-    """
+    """Add subject indicators to PDF pages where subjects are detected"""
     results = {
         "pdf_name": pdf_blob_name,
         "success": False,
@@ -244,7 +247,7 @@ def highlight_pdf_with_subjects(storage_client, bucket_name: str, pdf_blob_name:
         # Update results
         results["success"] = True
         results["marked_pdf_url"] = f"gs://{bucket_name}/{marked_pdf_name}"
-        results["marked_subjects"] = list(set().union(*page_subjects.values()))
+        results["marked_subjects"] = list(set().union(*page_subjects.values())) if page_subjects else []
         results["pdf_bytes"] = output_pdf  # Add PDF bytes to results
         
         return results
@@ -253,14 +256,14 @@ def highlight_pdf_with_subjects(storage_client, bucket_name: str, pdf_blob_name:
         results["error"] = f"Error marking PDF: {str(e)}"
         return results
 
-def process_pdf_with_subjects(pdf_path: str, json_path: str, credentials_path: str = 'genaigenesis-454500-aaca4e6f468e.json', bucket_name: str = "educatorgenai") -> Dict[str, Any]:
+def process_pdf_with_subjects(pdf_path: str, json_path: str, credentials_path: Optional[str] = None, bucket_name: str = "educatorgenai") -> Dict[str, Any]:
     """
     Process a PDF file with subjects from a JSON file and return the highlighted PDF.
     
     Args:
         pdf_path: Path to the PDF file in GCS (e.g. "folder/file.pdf")
         json_path: Path to the JSON file in GCS (e.g. "folder/file.json")
-        credentials_path: Path to GCP credentials file
+        credentials_path: Optional path to GCP credentials file. If None, uses ADC.
         bucket_name: Name of the GCS bucket
         
     Returns:
@@ -281,7 +284,7 @@ def process_pdf_with_subjects(pdf_path: str, json_path: str, credentials_path: s
     
     try:
         # Initialize storage client
-        storage_client = storage.Client.from_service_account_json(credentials_path)
+        storage_client = get_storage_client(credentials_path)
         
         # Get JSON data
         logger.info(f"Retrieving JSON data from GCS: {json_path}")
@@ -302,7 +305,16 @@ if __name__ == "__main__":
     pdf_path = "john2/lec02_2_DecisionTrees_complete.pdf"
     json_path = "john2/lec02_2_DecisionTrees_complete.json"
     
-    results = process_pdf_with_subjects(pdf_path, json_path)
+    # Use Application Default Credentials by default
+    credentials_path = None
+    
+    # Log authentication method
+    if credentials_path:
+        logger.info(f"Using service account credentials: {credentials_path}")
+    else:
+        logger.info("Using Application Default Credentials")
+    
+    results = process_pdf_with_subjects(pdf_path, json_path, credentials_path)
     
     # Print results
     print("\nProcessing Results:")
@@ -316,9 +328,6 @@ if __name__ == "__main__":
         
     if results.get('pdf_bytes'):
         print(f"PDF bytes available for local usage")
-        # Example of saving locally:
-        # with open('marked_pdf_local.pdf', 'wb') as f:
-        #     f.write(results['pdf_bytes'].getvalue())
     
     if results.get('error'):
         print(f"Error: {results['error']}")

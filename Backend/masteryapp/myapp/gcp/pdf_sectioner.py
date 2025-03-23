@@ -19,6 +19,7 @@ class PDFProcessor:
     def __init__(self, credentials_path: Optional[str] = None, debug: bool = False):
         """Initialize the PDF processor with GCP credentials"""
         self.debug = debug
+        self.credentials_path = credentials_path
         env_path = '../.env'
         load_dotenv(dotenv_path=env_path)
         
@@ -30,7 +31,24 @@ class PDFProcessor:
         
         # Initialize GCP services
         vertexai.init(project=self.project_id, location=self.location)
-        self.storage_client = storage.Client.from_service_account_json(credentials_path)
+        
+        # Initialize storage client
+        try:
+            if credentials_path and os.path.exists(credentials_path):
+                if self.debug:
+                    print(f"Using service account credentials from: {credentials_path}")
+                self.storage_client = storage.Client.from_service_account_json(credentials_path)
+            else:
+                if self.debug:
+                    print("Using Application Default Credentials")
+                self.storage_client = storage.Client()
+                
+            if self.debug:
+                print("Storage client initialized successfully")
+        except Exception as e:
+            print(f"Error initializing storage client: {str(e)}")
+            self.storage_client = None
+            raise
         
         # Initialize the generative model for subject extraction
         self.model = GenerativeModel(model_name="gemini-1.5-flash-001")
@@ -106,6 +124,7 @@ class PDFProcessor:
             3. Removing artifacts and noise
             4. Ensuring proper spacing between sections
             5. Keeping the document's logical structure
+            6. Remove stay new lines and whitespace
             
             Return only the cleaned text, with no additional commentary or formatting.
             

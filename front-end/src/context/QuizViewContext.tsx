@@ -18,7 +18,7 @@ export type Quiz = {
   id?: string;
   user?: string;
   name?: string;
-  course_id: string;
+  course: string;
   subjects: string[];
   materials: string[];
   completed_at?: string | null;
@@ -72,7 +72,9 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
         ? { ...quizData, user: String(authState.userId) }
         : quizData;
         
+      console.log(finalData)
       const { data } = await apiService.post(`${API_URL}/quizzes/`, finalData);
+      console.log(`data`)
       const newQuiz: Quiz = data.quiz;
       const questions: Question[] = data.questions;
       updateQuestions(questions);

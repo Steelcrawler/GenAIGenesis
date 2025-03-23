@@ -23,7 +23,7 @@ interface QuizConfigProps {
 }
 
 const QuizConfig: React.FC<QuizConfigProps> = ({ defaultConfig, onConfigSubmit, handleCancel }) => {
-  const { getCourse, courses } = useCourses();
+  const { courses } = useCourses();
   const { currentCourseId } = useCurrentCourse();
   const { materials } = useMaterials();
   const [config, setConfig] = useState<QuizConfig>(defaultConfig);
@@ -84,8 +84,8 @@ const QuizConfig: React.FC<QuizConfigProps> = ({ defaultConfig, onConfigSubmit, 
     // Update config with selected documents before submitting
     const updatedConfig = {
       ...config,
-      selectedCourse: selectedCourseId,
-      selectedDocuments: selectedDocumentIds
+      course: selectedCourseId!,
+      materials: selectedDocumentIds
     };
     onConfigSubmit(updatedConfig);
   };

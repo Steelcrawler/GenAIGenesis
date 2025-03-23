@@ -24,9 +24,9 @@ import { Question } from "@/context/QuestionContext";
     return {
       length: 20,
       optionsPerQuestion: 4,
-      course: "Math",
-      subjects: ["math"],
-      materials: ["vectors"],
+      course: "",
+      subjects: [],
+      materials: [],
     };
   };
   

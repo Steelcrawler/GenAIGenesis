@@ -7,7 +7,6 @@ import QuizConfig from '@/components/quiz/QuizConfig';
 import { QuizConfig as QuizConfigType } from '@/types/quiz';
 import { getDefaultQuizConfig } from '@/utils/quizUtils';
 import { Brain } from 'lucide-react';
-import { courseObject } from "@/components/quiz-popup"
 import AnimatedTransition from '@/components/quiz/AnimatedTransition';
 import { useCourses, Course } from "@/context/CourseContext"
 import { useCurrentCourse } from "@/context/CurrentCourseContext"
@@ -37,13 +36,13 @@ const Index = () => {
   }
   
   const handleStartQuiz = (config: QuizConfigType) => {
-    if (!course) {
+    if (!config.course) {
       alert("Please select a course.")
       return;
     }
 
     createQuiz({
-      course_id: config.course,
+      course: config.course,
       subjects: config.subjects,
       materials: config.materials,
       optionsPerQuestion: config.optionsPerQuestion,

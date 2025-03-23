@@ -27,6 +27,13 @@ def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_nam
                        credentials_path: Optional[str] = None) -> Dict[str, Any]:
     """Process a PDF file to create a JSON file with extracted subjects and text
     
+    Args:
+        bucket_name: Name of the GCS bucket
+        user_id: User ID or folder name where files are organized
+        course_id: Course ID or folder name where files are organized
+        file_name: Name of the PDF file stored in GCS
+        credentials_path: Optional path to service account file (uses ADC if None)
+    
     Returns:
         Dict: Results of processing with status information
     """
@@ -35,23 +42,24 @@ def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_nam
             error_msg = "User ID and file name must be provided"
             logger.error(error_msg)
             return {
-                "pdf_name": f"{user_id}/{course_id}/{file_name}" if user_id and file_name else "",
+                "pdf_name": file_name,
                 "success": False,
                 "error": error_msg
             }
             
         processor = PDFProcessor(debug=True, credentials_path=credentials_path)
-        # The full blob path includes the user_id
+        # Update the processor to accept separate parameters if needed
+        # For now, we'll pass the combined path if that's what the processor expects
         blob_path = f"{user_id}/{course_id}/{file_name}"
         results = processor.process_pdf(bucket_name, blob_path)
-        logger.info(f"JSON file created in gs://{bucket_name}/{user_id}/{course_id}/{file_name}.json")
+        logger.info(f"JSON file created in gs://{bucket_name}/{user_id}/{course_id}/{file_name.rsplit('.', 1)[0]}.json")
         return results
     
     except Exception as e:
         error_msg = f"Error processing PDF: {str(e)}"
         logger.error(error_msg)
         return {
-            "pdf_name": f"{user_id}/{course_id}/{file_name}",
+            "pdf_name": file_name,
             "success": False,
             "text_extracted": False,
             "subjects": [],
@@ -68,6 +76,7 @@ def upload_and_process_pdf(file_obj, bucket_name: str, user_id: str, course_id: 
         file_obj: A file-like object from Django's request.FILES
         bucket_name: Name of the GCS bucket
         user_id: User ID or folder name to organize files
+        course_id: Course ID or folder name to organize files
         file_name: Name to save the file as in GCS
         credentials_path: Optional path to service account file (uses ADC if None)
         
@@ -109,12 +118,12 @@ def upload_and_process_pdf(file_obj, bucket_name: str, user_id: str, course_id: 
     # 1. Check if user folder exists, create if not
     user_folder_exists = check_user_folder_exists(bucket_name, user_id, course_id, credentials_path)
     if not user_folder_exists:
-        logger.info(f"User folder does not exist, creating: {user_id}")
+        logger.info(f"User folder does not exist, creating: {user_id}/{course_id}/")
         folder_created = create_user_folder_in_gcs(bucket_name, user_id, course_id, credentials_path)
         if not folder_created:
             return {
                 "success": False,
-                "error": f"Failed to create user folder: {user_id}"
+                "error": f"Failed to create user folder: {user_id}/{course_id}/"
             }
     
     # 2. Upload the PDF to the user's folder
@@ -164,10 +173,16 @@ def upload_process_and_highlight_pdf(file_obj, bucket_name: str, user_id: str, c
         # 2. Process the PDF and create JSON
         results = process_pdf_to_json(bucket_name, user_id, course_id, file_name, credentials_path)
         
-        pdf_path = f"{user_id}/{course_id}/{file_name}"
-        # 3. Highlight the PDF
-        results = process_pdf_with_subjects(pdf_path, credentials_path, bucket_name)
-        if not results:
+        # 3. Highlight the PDF - passing individual parameters instead of path
+        highlight_results = process_pdf_with_subjects(
+            user_id=user_id,
+            course_id=course_id,
+            file_name=file_name,
+            credentials_path=credentials_path,
+            bucket_name=bucket_name
+        )
+        
+        if not highlight_results:
             return {
                 "success": False,
                 "error": f"Failed to highlight PDF: {file_name}"
@@ -175,9 +190,9 @@ def upload_process_and_highlight_pdf(file_obj, bucket_name: str, user_id: str, c
         
         return {
             "success": True,
-            "pdf_name": f"{user_id}/{course_id}/{file_name}",
-            "highlighted_bytes": results['pdf_bytes'],
-            "highlighted_pdf_url": f"gs://{bucket_name}/{user_id}/{course_id}/{file_name}_highlighted.pdf"
+            "pdf_name": file_name,
+            "highlighted_bytes": highlight_results['pdf_bytes'],
+            "highlighted_pdf_url": highlight_results['marked_pdf_url']
         }
     
     except Exception as e:  
@@ -239,7 +254,7 @@ if __name__ == "__main__":
             print(f"Error: {results['error']}")
         
         if results.get('pdf_name') and results.get('success'):
-            print(f"\nResults saved to: gs://{bucket_name}/{results['pdf_name']}.json")
+            print(f"\nResults saved to: gs://{bucket_name}/{user_id}/{course_id}/{results['pdf_name'].rsplit('.', 1)[0]}.json")
     
     except FileNotFoundError:
         print(f"Error: The file {local_pdf_path} was not found.")

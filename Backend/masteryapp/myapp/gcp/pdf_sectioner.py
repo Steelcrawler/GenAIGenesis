@@ -53,11 +53,24 @@ class PDFProcessor:
         # Initialize the generative model for subject extraction
         self.model = GenerativeModel(model_name="gemini-1.5-flash-001")
 
-    def get_pdf_from_bucket(self, bucket_name: str, blob_name: str) -> Optional[io.BytesIO]:
-        """Get a PDF from GCS bucket as a BytesIO object without downloading to disk"""
+    def get_pdf_from_bucket(self, bucket_name: str, user_id: str, course_id: str, file_name: str) -> Optional[io.BytesIO]:
+        """Get a PDF from GCS bucket as a BytesIO object without downloading to disk
+        
+        Args:
+            bucket_name: The GCS bucket name
+            user_id: User ID or folder name where files are organized
+            course_id: Course ID or folder name where files are organized
+            file_name: Name of the PDF file stored in GCS
+            
+        Returns:
+            Optional[io.BytesIO]: BytesIO object containing the PDF data, or None if an error occurs
+        """
         try:
+            # Construct the full blob path
+            blob_path = f"{user_id}/{course_id}/{file_name}"
+            
             bucket = self.storage_client.bucket(bucket_name)
-            blob = bucket.blob(blob_name)
+            blob = bucket.blob(blob_path)
             
             # Download blob to memory
             pdf_bytes = io.BytesIO()
@@ -65,21 +78,33 @@ class PDFProcessor:
             pdf_bytes.seek(0)  # Reset pointer to beginning of file
             
             if self.debug:
-                print(f"Downloaded {blob_name} to memory")
+                print(f"Downloaded {blob_path} to memory")
                 
             return pdf_bytes
         except Exception as e:
             print(f"Error getting PDF from bucket: {str(e)}")
             return None
 
-    def save_json_to_bucket(self, bucket_name: str, blob_name: str, data: Dict[str, Any]) -> bool:
-        """Save JSON data to GCS bucket"""
+    def save_json_to_bucket(self, bucket_name: str, user_id: str, course_id: str, file_name: str, data: Dict[str, Any]) -> bool:
+        """Save JSON data to GCS bucket
+        
+        Args:
+            bucket_name: The GCS bucket name
+            user_id: User ID or folder name where files are organized
+            course_id: Course ID or folder name where files are organized
+            file_name: Name of the PDF file stored in GCS (will be used to create JSON filename)
+            data: Dictionary containing the data to save as JSON
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
         try:
             # Create a JSON file name based on PDF name
-            json_blob_name = blob_name.rsplit('.', 1)[0] + '.json'
+            json_file_name = file_name.rsplit('.', 1)[0] + '.json'
+            json_blob_path = f"{user_id}/{course_id}/{json_file_name}"
             
             bucket = self.storage_client.bucket(bucket_name)
-            blob = bucket.blob(json_blob_name)
+            blob = bucket.blob(json_blob_path)
             
             # Convert dict to JSON string and encode as bytes
             json_bytes = json.dumps(data, indent=2).encode('utf-8')
@@ -88,7 +113,7 @@ class PDFProcessor:
             blob.upload_from_string(json_bytes, content_type='application/json')
             
             if self.debug:
-                print(f"Uploaded results to {bucket_name}/{json_blob_name}")
+                print(f"Uploaded results to {bucket_name}/{json_blob_path}")
                 
             return True
         except Exception as e:
@@ -502,19 +527,21 @@ class PDFProcessor:
         
         return True
 
-    def process_pdf(self, bucket_name: str, pdf_blob_name: str, existing_subjects: List[str] = None) -> Dict[str, Any]:
+    def process_pdf(self, bucket_name: str, user_id: str, course_id: str, file_name: str, existing_subjects: List[str] = None) -> Dict[str, Any]:
         """Process a PDF file from GCS, extract text, identify subjects, and update database
         
         Args:
             bucket_name: The GCS bucket name
-            pdf_blob_name: The name of the PDF blob in the bucket
+            user_id: User ID or folder name where files are organized
+            course_id: Course ID or folder name where files are organized
+            file_name: Name of the PDF file stored in GCS
             existing_subjects: Optional list of subjects to explicitly look for in the document
             
         Returns:
             Dictionary with processing results
         """
         results = {
-            "pdf_name": pdf_blob_name,
+            "pdf_name": file_name,
             "success": False,
             "text_extracted": False,
             "subjects": [],
@@ -524,9 +551,9 @@ class PDFProcessor:
         }
         
         try:
-            pdf_bytes = self.get_pdf_from_bucket(bucket_name, pdf_blob_name)
+            pdf_bytes = self.get_pdf_from_bucket(bucket_name, user_id, course_id, file_name)
             if not pdf_bytes:
-                results["error"] = "Failed to get PDF from bucket"
+                results["error"] = f"Failed to get PDF from bucket: {bucket_name}/{user_id}/{course_id}/{file_name}"
                 return results
                 
             # Extract text from PDF
@@ -562,7 +589,7 @@ class PDFProcessor:
             results["success"] = True
             
             # Save results to GCS bucket
-            self.save_json_to_bucket(bucket_name, pdf_blob_name, results)
+            self.save_json_to_bucket(bucket_name, user_id, course_id, file_name, results)
             
             return results
             
@@ -571,7 +598,7 @@ class PDFProcessor:
             
             # Try to save error results to GCS bucket too
             try:
-                self.save_json_to_bucket(bucket_name, pdf_blob_name, results)
+                self.save_json_to_bucket(bucket_name, user_id, course_id, file_name, results)
             except:
                 pass
                 
@@ -582,20 +609,22 @@ def main():
     credentials_path = 'genaigenesis-454500-aaca4e6f468e.json'
     processor = PDFProcessor(debug=True, credentials_path=credentials_path)
     
-    # Example usage with a GCS bucket and PDF
-    bucket_name = "educatorgenai"  # Bucket name without folder
-    pdf_blob_name = "john/lec02_1_DecisionTrees_complete.pdf"  # Include folder path as part of the blob name
+    # Example usage with a GCS bucket and PDF using separate parameters
+    bucket_name = "educatorgenai"
+    user_id = "john"
+    course_id = "cs101"
+    file_name = "lec02_1_DecisionTrees_complete.pdf"
     
     # List of existing subjects we want to look for in the document
     existing_subjects = ["Decision Trees", "Classification Algorithms", "Information Gain"]
     
     # Process the PDF with our existing subjects
     print(f"\nProcessing PDF with {len(existing_subjects)} existing subjects: {', '.join(existing_subjects)}")
-    results = processor.process_pdf(bucket_name, pdf_blob_name, existing_subjects=existing_subjects)
+    results = processor.process_pdf(bucket_name, user_id, course_id, file_name, existing_subjects=existing_subjects)
     
     # Print a summary of the results
     print(f"\nSummary:")
-    print(f"PDF: {results['pdf_name']}")
+    print(f"PDF: {user_id}/{course_id}/{results['pdf_name']}")
     print(f"Success: {results['success']}")
     print(f"Text Extracted: {results['text_extracted']}")
     print(f"Subjects found: {len(results['subjects'])}")
@@ -630,8 +659,8 @@ def main():
             print("   No relevant text found for this subject")
         
     # Print where results were saved
-    json_blob_name = pdf_blob_name.rsplit('.', 1)[0] + '.json'
-    print(f"\nResults saved to: gs://{bucket_name}/{json_blob_name}")
+    json_file_name = file_name.rsplit('.', 1)[0] + '.json'
+    print(f"\nResults saved to: gs://{bucket_name}/{user_id}/{course_id}/{json_file_name}")
     print("\nLegend: ✓ = Subject from existing list, + = New subject found in document")
 
 if __name__ == "__main__":

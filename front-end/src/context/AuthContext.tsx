@@ -43,18 +43,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           });
 
           if (!data.logged_in) {
-            // Pas loggé : accès seulement à /login ou /signup
             if (pathname !== "/login" && pathname !== "/signup") {
               router.push("/login");
             }
           } else {
-            // Déjà loggé : pas besoin de /login ou /signup
             if (pathname === "/login" || pathname === "/signup") {
               router.push("/courses");
             }
           }
         } else {
-          // Requête non OK
           if (pathname !== "/login") {
             router.push("/login");
           }

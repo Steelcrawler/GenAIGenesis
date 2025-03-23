@@ -4,9 +4,9 @@ import logging
 from typing import Dict, Any, Optional
 from google.cloud import storage
 from google.cloud.exceptions import NotFound, Forbidden
-from pdf_sectioner import PDFProcessor
+from .pdf_sectioner import PDFProcessor
 from google.auth import default
-from pdf_highlighting import process_pdf_with_subjects
+from .pdf_highlighting import process_pdf_with_subjects
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, 

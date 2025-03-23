@@ -1,8 +1,5 @@
 from rest_framework import viewsets
 from rest_framework.viewsets import ViewSet
-
-from masteryapp.myapp.serializers.material_snippet_serializer import MaterialSnippetSerializer
-from masteryapp.myapp.serializers.subject_serializer import SubjectSerializer
 from ..models.class_material import ClassMaterial
 from ..serializers.class_material_serializer import ClassMaterialSerializer
 from rest_framework.response import Response

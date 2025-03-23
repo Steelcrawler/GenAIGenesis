@@ -32,7 +32,7 @@ from io import BytesIO
 from pdfminer.high_level import extract_text
 from ..gcp.rag_question_maker import QuizMakerRAG
 
-class QuizViewSet(viewsets.ModelViewSet):
+class QuestionViewset(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     permission_classes = [IsAuthenticated]

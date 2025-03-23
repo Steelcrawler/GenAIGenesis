@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_name: str, 
-                       credentials_path: Optional[str] = None, existing_subjects: List[str] = None) -> Dict[str, Any]:
+                       credentials_path: Optional[str] = None, existing_subjects: list[str] = None) -> Dict[str, Any]:
     """Process a PDF file to create a JSON file with extracted subjects and text
     
     Args:

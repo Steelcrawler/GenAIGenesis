@@ -9,22 +9,22 @@ import { getDefaultQuizConfig } from '@/utils/quizUtils';
 import { Brain } from 'lucide-react';
 import { courseObject } from "@/components/quiz-popup"
 import AnimatedTransition from '@/components/quiz/AnimatedTransition';
+import { useCourses, Course } from "@/context/CourseContext"
+import { useCurrentCourse } from "@/context/CurrentCourseContext"
+import { useQuizzes } from '@/context/QuizViewContext';
 
 const Index = () => {
   const router = useRouter();
-  const [course, setCourse] = useState<string | undefined>();
-  const [courses, setCourses] = useState<courseObject[]>([]);
+  const { createQuiz } = useQuizzes();
+  const [course, setCourse] = useState<string | null>(null);
+  const [courses, setCourses] = useState<Course[] | null>(null);
+  const { currentCourseId } = useCurrentCourse();
+  const context = useCourses();
 
   useEffect(() => {
     const getCourses = () => {
-      try {
-        // TODO: Make API call
-        setCourses([])
-        // TODO: Get default course if any
-      } catch (error) {
-        console.error('Error initializing quiz:', error);
-        // Handle error
-      }
+      setCourse(currentCourseId);
+      setCourses(context.courses)
     };
 
     // Initialize with a small delay for loading animation
@@ -37,7 +37,18 @@ const Index = () => {
   }
   
   const handleStartQuiz = (config: QuizConfigType) => {
-    // TODO: push quiz config
+    if (!course) {
+      alert("Please select a course.")
+      return;
+    }
+
+    createQuiz({
+      course_id: config.course,
+      subjects: config.subjects,
+      materials: config.materials,
+      optionsPerQuestion: config.optionsPerQuestion,
+      quiz_length: config.length
+    })
 
     router.push('/quiz');
   };

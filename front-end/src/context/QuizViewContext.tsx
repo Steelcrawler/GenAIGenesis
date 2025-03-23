@@ -10,19 +10,21 @@ import React, {
 
 import { useAuth } from '@/context/AuthContext';
 import { apiService } from '@/services/api';
+import { Question, useQuestions } from "@/context/QuestionContext";
 
 const API_URL = "http://localhost:8000/api";
 
 export type Quiz = {
-  id: string;
-  user: string;
-  name: string;
+  id?: string;
+  user?: string;
+  name?: string;
   course_id: string;
   subjects: string[];
   materials: string[];
-  completed_at: string | null;
-  created_at: string;
-  optimize_learning: boolean;
+  completed_at?: string | null;
+  created_at?: string;
+  optimize_learning?: boolean;
+  optionsPerQuestion: number;
   quiz_length: number;
 };
 
@@ -44,6 +46,7 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
   const [quizzes, setQuizzes] = useState<Quiz[] | null>(null);
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
   const authState = useAuth();
+  const { updateQuestions } = useQuestions();
 
   const refreshQuizzes = async () => {
     if (!authState.loggedIn) return;
@@ -72,7 +75,7 @@ export const QuizProvider: React.FC<{ children: ReactNode }> = ({
       const { data } = await apiService.post(`${API_URL}/quizzes/`, finalData);
       const newQuiz: Quiz = data.quiz;
       const questions: Question[] = data.questions;
-      udpateQuestions(questions);
+      updateQuestions(questions);
       setCurrentQuiz(newQuiz);
 
       setQuizzes((prev) => Array.isArray(prev) ? [newQuiz, ...prev] : [newQuiz]);

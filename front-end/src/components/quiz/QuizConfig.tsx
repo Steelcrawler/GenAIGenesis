@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { QuizConfig } from '@/types/quiz';
 import Button from './Button';
 import { useCourses, ClassMaterial } from '@/context/CourseContext';
-import { useCurrentCourse } from '@/context/SelectedCourseContext';
+import { useCurrentCourse } from '@/context/CurrentCourseContext';
 
 interface pdfObject {
     label: string;

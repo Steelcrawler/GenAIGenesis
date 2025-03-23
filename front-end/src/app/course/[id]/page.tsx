@@ -20,7 +20,7 @@ import { ArrowLeft, Calendar, Edit, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import SubjectMasteryContainer from "@/components/SubjectMasteryContainer";
-import { useCurrentCourse } from "@/context/SelectedCourseContext";
+import { useCurrentCourse } from "@/context/CurrentCourseContext";
 
 export default function CourseDetail() {
   const params = useParams();

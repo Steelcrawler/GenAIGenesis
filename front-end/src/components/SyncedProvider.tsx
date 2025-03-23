@@ -7,19 +7,22 @@ import { QuizProvider } from "@/context/QuizViewContext";
 import { CurrentCourseProvider } from "@/context/CurrentCourseContext";
 import { QuestionProvider } from "@/context/QuestionContext";
 import { SubjectProvider } from "@/context/SubjectContext";
+import { ResponseProvider } from "@/context/ResponseContext"
 
 export const SyncedProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <QuestionProvider>
-    <CurrentCourseProvider>
-      <QuizProvider>
-        <MaterialProvider>
-          <CourseProvider>
-            <SubjectProvider>
-              {children}
-            </SubjectProvider>
-          </CourseProvider>
-        </MaterialProvider>
-      </QuizProvider>
-    </CurrentCourseProvider>
-  </QuestionProvider>
+  <ResponseProvider>
+    <QuestionProvider>
+      <CurrentCourseProvider>
+        <QuizProvider>
+          <MaterialProvider>
+            <CourseProvider>
+              <SubjectProvider>
+                {children}
+              </SubjectProvider>
+            </CourseProvider>
+          </MaterialProvider>
+        </QuizProvider>
+      </CurrentCourseProvider>
+    </QuestionProvider>
+  </ResponseProvider>
 );

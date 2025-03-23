@@ -91,10 +91,10 @@ const Index = () => {
       </main>
 
       {isloading && (
-  <div className="fixed inset-0 flex items-center justify-center bg-light-grey bg-opacity-10 z-50">
-    <Loader className="w-12 h-12 animate-spin text-white" />
-  </div>
-)}
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <Loader className="w-12 h-12 animate-spin text-white" />
+        </div>
+      )}
     </div>
   );
 };

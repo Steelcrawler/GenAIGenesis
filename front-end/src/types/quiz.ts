@@ -10,5 +10,4 @@ export interface QuizConfig {
 export interface QuizResult {
   totalQuestions: number;
   correctAnswers: number;
-  timeTaken: number; // in seconds
 }

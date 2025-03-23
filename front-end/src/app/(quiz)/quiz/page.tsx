@@ -6,44 +6,38 @@ import Navbar from '@/components/quiz/Navbar';
 import QuizQuestion from '@/components/quiz/QuizQuestion';
 import ProgressBar from '@/components/quiz/ProgressBar';
 import AnimatedTransition from '@/components/quiz/AnimatedTransition';
-import { QuizResult } from '@/types/quiz';
-import { calculateResults } from '@/utils/quizUtils';
 import { Clock } from 'lucide-react';
 import { useQuestions, Question } from '@/context/QuestionContext';
 import { useQuizzes } from '@/context/QuizViewContext';
+import { Response, useResponse } from '@/context/ResponseContext';
 
 const Quiz = () => {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [elapsed, setElapsed] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [responses, setResponses] = useState<Response[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const allQuestions = useQuestions().questions;
-  const { currentQuiz } = useQuizzes();
+  const { currentQuiz, submitQuiz } = useQuizzes();
 
   // Initialize quiz
   useEffect(() => {
-    const initQuiz = () => {
-      console.log(currentQuiz);
-      if (!currentQuiz) {
-        console.log("Current quiz is not set!");
-        return;
-      }
+    if (!currentQuiz) {
+      router.push("/quiz-config")
+      return;
+    }
 
-      setQuestions(allQuestions ? 
-        allQuestions
-          .filter(question => question.quiz_id == currentQuiz.id!)
-        : [])
-      console.log(allQuestions && allQuestions
-        .filter(question => question.quiz_id == currentQuiz.id!))
-    };
+    setQuestions(allQuestions ? 
+      allQuestions
+        .filter(question => question.quiz == currentQuiz.id!)
+      : [])
 
     // Initialize with a small delay for loading animation
-    const timer = setTimeout(initQuiz, 500);
     setIsLoading(false);
-    return () => clearTimeout(timer);
   }, []);
 
   // Timer effect
@@ -58,25 +52,27 @@ const Quiz = () => {
   }, [startTime, isLoading]);
 
   // Handle answer submission
-  const handleAnswerSubmit = useCallback(() => {
-    
-    // Animation between questions
+  async function handleAnswerSubmit() {
+    if (currentQuestionIndex + 1 >= questions.length) {
+      // Quiz completed, calculate results and navigate
+      await submitQuiz({id: currentQuiz!.id!, responses: [...responses, {id: questions[currentQuestionIndex].id!, single_choice: selectedIndex}]});
+      router.push("/quiz-results");
+      return currentQuestionIndex;
+    } 
+
     setIsAnimating(true);
+    // Animation between questions
     setTimeout(() => {
-      setCurrentQuestionIndex(prevIndex => {
-        if (prevIndex + 1 >= questions.length) {
-          // Quiz completed, calculate results and navigate
-          const totalTime = Math.floor((Date.now() - startTime) / 1000);
-          const result: QuizResult = calculateResults(questions, totalTime);
-          // TODO save result in backend
-          router.push("/quiz-results");
-          return prevIndex;
-        }
-        return prevIndex + 1;
-      });
-      setIsAnimating(false);
+      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+      setResponses(prevResponses => 
+        [
+          ...prevResponses, 
+          {id: questions[currentQuestionIndex].id!, single_choice: selectedIndex}
+        ]
+      );
     }, 500);
-  }, [questions, router, startTime]);
+    setIsAnimating(false);
+  }
 
   // Format time
   const formatTime = (seconds: number) => {
@@ -128,7 +124,8 @@ const Quiz = () => {
                   <QuizQuestion 
                     question={questions[currentQuestionIndex]}
                     onAnswerSubmit={handleAnswerSubmit}
-                    showFeedback={true}
+                    showFeedback={false}
+                    setSelectedIndex={setSelectedIndex}
                   />
                 )}
               </AnimatedTransition>

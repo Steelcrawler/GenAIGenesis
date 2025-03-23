@@ -35,10 +35,12 @@ const QuizConfig: React.FC<QuizConfigProps> = ({ defaultConfig, onConfigSubmit, 
     }
 
     setSelectedCourseId(currentCourseId);
+    console.log(selectedCourseId)
     const courseDocs = selectedCourseId ? getCourse(selectedCourseId)?.material || [] : []
+    console.log(getCourse(selectedCourseId || ""))
     setOptions(courseDocs);
     setSelectedDocumentIds([]);
-  })
+  }, [])
 
   const handleSelectedCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCourseId(e.target.value);

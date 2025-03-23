@@ -1,34 +1,48 @@
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import SubjectMasteryTag from './SubjectTag';
+import { useSubjects } from '@/context/SubjectContext';
 
-const SubjectMasteryContainer = () => {
-    // TODO: get subjects
-    const subjects = [
-        {
-            subject: "Math",
-            masteryLevel: 100
-        },
-        {
-            subject: "CS",
-            masteryLevel: 80
-        },
-        {
-            subject: "English",
-            masteryLevel: 30
-        },
-    ]
+interface SubjectMasteryContainerProps {
+    courseId: string;
+  }
 
-    return (
-      <div className="space-y-4">
-        <h2 className="text-xl font-medium mb-2">Subject Mastery Tags</h2>
-        <div className="flex flex-wrap gap-3">
-            {subjects && subjects.length > 0 && subjects.map(({ subject, masteryLevel }, index) => {
-                return (<SubjectMasteryTag key={index} subject={subject} masteryLevel={masteryLevel} />)
-            })}
-        </div>
+
+
+const SubjectMasteryContainer: React.FC<SubjectMasteryContainerProps> = ({ courseId }) => {
+    const { loading, error, getSubjectsByCourse } = useSubjects();
+    const [masteryData, setMasteryData] = useState<
+    { subject: string; masteryLevel: number }[]
+  >([]);
+
+    useEffect(() => {
+    const subjects = getSubjectsByCourse(courseId);
+    if (subjects.length > 0) {
+      const mockData = subjects.map((s) => ({
+        subject: s.name,
+        masteryLevel: Math.floor(Math.random() * 101),
+      }));
+      setMasteryData(mockData);
+    }
+  }, [courseId, getSubjectsByCourse]);
+
+  if (loading) return <p>Loading subjects...</p>;
+  if (error) return <p className="text-destructive">{error}</p>;
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-medium mb-2">Subject Mastery Tags</h2>
+      <div className="flex flex-wrap gap-3">
+        {masteryData.map(({ subject, masteryLevel }, index) => (
+          <SubjectMasteryTag
+            key={index}
+            subject={subject}
+            masteryLevel={masteryLevel}
+          />
+        ))}
       </div>
-    );
+    </div>
+  );
   };
   
   export default SubjectMasteryContainer;

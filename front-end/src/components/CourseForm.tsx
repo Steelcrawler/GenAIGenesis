@@ -66,11 +66,8 @@ const CourseForm: React.FC<CourseFormProps> = ({ courseId }) => {
     setImageError(true);
   };
 
-  // État pour gérer les erreurs de validation
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  // État pour gérer si le formulaire est en cours de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // État pour afficher le loader de création des matériaux
   const [showMaterialsLoading, setShowMaterialsLoading] = useState(false);
 
   // Convertit un fichier en base64 (facultatif selon votre logique)

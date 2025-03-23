@@ -1,4 +1,4 @@
-// File: app/course/[id]/page.tsx
+
 'use client';
 
 import React, { useState } from "react";
@@ -111,30 +111,30 @@ export default function CourseDetail() {
             {/* Action Buttons: Edit, Delete & Start Quiz */}
             <div className="mt-6 flex flex-col gap-2">
               <div className="flex space-x-4">
-                <Link href={`/edit-course/${id}`} className="flex-1">
+              <Link href={`/edit-course/${id}`} className="flex-1">
                   <Button className="w-full gap-2 cursor-pointer" variant="outline">
-                    <Edit className="h-4 w-4" />
-                    <span>Edit</span>
-                  </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2 text-destructive hover:bg-destructive hover:text-white cursor-pointer"
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <Trash className="h-4 w-4" />
-                  <span>Delete</span>
+                  <Edit className="h-4 w-4" />
+                  <span>Edit</span>
                 </Button>
-              </div>
+              </Link>
               <Button
-                className="w-full gap-2 cursor-pointer bg-blue-600 hover:bg-blue-600/80 text-white"
-                onClick={handleQuizStart}
+                variant="outline"
+                className="flex-1 gap-2 text-destructive hover:bg-destructive hover:text-white cursor-pointer"
+                onClick={() => setConfirmDelete(true)}
               >
-                <span role="img" aria-label="play">►</span> Start Quiz
+                <Trash className="h-4 w-4" />
+                <span>Delete</span>
               </Button>
             </div>
+            <Button
+                className="w-full gap-2 cursor-pointer bg-blue-600 hover:bg-blue-600/80 text-white"
+              onClick={handleQuizStart}
+            >
+            <span role="img" aria-label="play">►</span> Start Quiz
+          </Button>
           </div>
-
+          </div>
+         
           {/* Right Column: Course Details */}
           <div className="lg:w-2/3">
             <div className="glass rounded-lg p-8">

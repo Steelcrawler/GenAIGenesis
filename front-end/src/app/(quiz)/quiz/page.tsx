@@ -20,7 +20,6 @@ const Quiz = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const [responses, setResponses] = useState<Response[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const allQuestions = useQuestions().questions;
   const { currentQuiz, submitQuiz } = useQuizzes();
 
@@ -52,10 +51,10 @@ const Quiz = () => {
   }, [startTime, isLoading]);
 
   // Handle answer submission
-  async function handleAnswerSubmit() {
+  async function handleAnswerSubmit(index: number) {
     if (currentQuestionIndex + 1 >= questions.length) {
       // Quiz completed, calculate results and navigate
-      await submitQuiz({id: currentQuiz!.id!, responses: [...responses, {id: questions[currentQuestionIndex].id!, single_choice: selectedIndex}]});
+      await submitQuiz({id: currentQuiz!.id!, responses: [...responses, {id: questions[currentQuestionIndex].id!, single_choice: index}]});
       router.push("/quiz-results");
       return currentQuestionIndex;
     } 
@@ -67,7 +66,7 @@ const Quiz = () => {
       setResponses(prevResponses => 
         [
           ...prevResponses, 
-          {id: questions[currentQuestionIndex].id!, single_choice: selectedIndex}
+          {id: questions[currentQuestionIndex].id!, single_choice: index}
         ]
       );
     }, 500);
@@ -123,9 +122,8 @@ const Quiz = () => {
                 {questions.length > 0 && currentQuestionIndex < questions.length && (
                   <QuizQuestion 
                     question={questions[currentQuestionIndex]}
-                    onAnswerSubmit={handleAnswerSubmit}
+                    onAnswerSubmit={(index) => handleAnswerSubmit(index)}
                     showFeedback={false}
-                    setSelectedIndex={setSelectedIndex}
                   />
                 )}
               </AnimatedTransition>

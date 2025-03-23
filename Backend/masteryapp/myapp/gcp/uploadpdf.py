@@ -310,15 +310,16 @@ def upload_process_and_highlight_pdf(file_obj, bucket_name: str, user_id: str, c
         if not upload_success:
             return {
                 "success": False,
-                    "error": f"Failed to upload PDF: {file_name}"
+                "error": f"Failed to upload PDF: {file_name}"
             }
         
         # 2. Process the PDF and create JSON
         results = process_pdf_to_json(bucket_name, user_id, course_id, file_name, credentials_path)
         
+        pdf_path = f"{user_id}/{course_id}/{file_name}"
         # 3. Highlight the PDF
-        highlight_success = process_pdf_with_subjects(bucket_name, user_id, course_id, file_name, credentials_path)
-        if not highlight_success:
+        results = process_pdf_with_subjects(pdf_path, credentials_path, bucket_name)
+        if not results:
             return {
                 "success": False,
                 "error": f"Failed to highlight PDF: {file_name}"
@@ -327,6 +328,7 @@ def upload_process_and_highlight_pdf(file_obj, bucket_name: str, user_id: str, c
         return {
             "success": True,
             "pdf_name": f"{user_id}/{course_id}/{file_name}",
+            "highlighted_bytes": results['pdf_bytes'],
             "highlighted_pdf_url": f"gs://{bucket_name}/{user_id}/{course_id}/{file_name}_highlighted.pdf"
         }
     

@@ -167,11 +167,13 @@ class PDFProcessor:
                 """
             
             prompt = f"""
-            Extract key subjects (at most 5) from the following text content from a PDF document.
+            Extract key subjects (ONLY THE MOST IMPORTANT ONES) from the following text content from a PDF document.
             Analyze the entire document to identify the most important topics and concepts.
             The subjects should be the main topics of the document. (theoretical, not practical)
             {existing_subjects_text}
             
+            You should, very rarely, be adding more subjects than what is already provided, unless nothing else is relevant. 
+            SUBJECTS MUST BE AT MOST 3 WORDS.
             Format your response as a JSON array, each having the following structure:
             {{
                 "subject": "The subject name/term",

@@ -47,7 +47,7 @@ def process_pdf_to_json(bucket_name: str, user_id: str, course_id: str, file_nam
                 "error": error_msg
             }
             
-        processor = PDFProcessor(debug=True, credentials_path=credentials_path)
+        processor = PDFProcessor(debug=True, user_id=user_id, course_id=course_id, file_name=file_name, credentials_path=credentials_path)
         # Update the processor to accept separate parameters if needed
         # For now, we'll pass the combined path if that's what the processor expects
         blob_path = f"{user_id}/{course_id}/{file_name}"

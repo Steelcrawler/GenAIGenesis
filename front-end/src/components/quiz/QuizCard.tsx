@@ -28,7 +28,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, courseOverride }) => {
   const handleClick = () => {
     if (isCompleted) {
       // For completed quizzes, navigate to a view quiz page (placeholder)
-      router.push(`/view-quiz/${quiz.id}`);
+      router.push(`/quiz_history/${quiz.id}`);
     } else {
       // For open quizzes, set as current and navigate to active quiz page
       setCurrentQuiz(quiz);

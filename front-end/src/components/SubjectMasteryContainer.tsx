@@ -28,7 +28,7 @@ const SubjectMasteryContainer: React.FC<SubjectMasteryContainerProps> = ({ cours
       const mockData = subjects.map((s) => ({
         subject: s.name,
         subjectId: s.id,
-        masteryLevel: s.mastery,
+        masteryLevel: Math.round(s.mastery * 100),
       }));
       setMasteryData(mockData);
     }

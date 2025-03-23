@@ -13,8 +13,9 @@ import uuid
 
 class QuizMakerRAG:
     def __init__(self, service_account_path: Optional[str] = None, debug: bool = False):
-        """Initialize the RAG model with a simplified approach"""
+        """Initialize the RAG model with ADC or service account credentials"""
         self.debug = debug
+        self.service_account_path = service_account_path
         env_path = './.env'
         load_dotenv(dotenv_path=env_path)
         
@@ -25,15 +26,27 @@ class QuizMakerRAG:
             print(f"\nInitializing RAG model with:")
             print(f"  Project ID: {self.project_id}")
             print(f"  Location: {self.location}")
+            print(f"  Credentials: {'ADC' if not service_account_path else service_account_path}")
         
-        # Simple initialization - matching the working example
+        # Initialize Vertex AI
         vertexai.init(project=self.project_id, location=self.location)
         
-        # Initialize storage client separately
-        if service_account_path and os.path.exists(service_account_path):
-            self.storage_client = storage.Client.from_service_account_json(service_account_path)
-        else:
-            self.storage_client = storage.Client()
+        # Initialize storage client
+        try:
+            if service_account_path and os.path.exists(service_account_path):
+                if self.debug:
+                    print(f"  Using service account for storage client")
+                self.storage_client = storage.Client.from_service_account_json(service_account_path)
+            else:
+                if self.debug:
+                    print(f"  Using Application Default Credentials for storage client")
+                self.storage_client = storage.Client()
+                
+            if self.debug:
+                print("  Storage client initialized successfully")
+        except Exception as e:
+            print(f"Error initializing storage client: {str(e)}")
+            raise
 
     def setup_corpus(self, bucket_name: str, data_list: List[dict]) -> Optional[str]:
         """Set up the RAG corpus from selected files in GCS bucket"""

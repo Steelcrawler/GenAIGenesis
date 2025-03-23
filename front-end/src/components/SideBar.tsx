@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft, FolderOpen, Plus, Search } from "lucide-react";
-import { CourseFile, useCourses } from "@/context/CourseContext";
+import { ClassMaterial, useCourses } from "@/context/CourseContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const { filteredCourses, searchTerm, setSearchTerm } = useCourses();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
@@ -87,9 +88,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                         isActive && "border-l-4 border-black",
                         isExpanded && "bg-sidebar-accent"
                       )}
-                      onClick={() =>
-                        setExpandedCourseId(isExpanded ? null : course.id)
-                      }
+                      onClick={() => {
+                        setExpandedCourseId(isExpanded ? null : course.id);
+                        router.push(`/course/${course.id}`)
+                      }}
                     >
                       <ChevronLeft
                         className={cn(
@@ -101,21 +103,21 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                       
                     </div>
 
-                    {isExpanded && course.files && course.files.length > 0 && (
+                    {isExpanded && course.material && course.material.length > 0 && (
                       <ul className="ml-6 mt-1 space-y-1 text-sm">
-                        {course.files.map((file: CourseFile) => (
-                          <li key={file.id}>
+                        {course.material.map((material: ClassMaterial) => (
+                          <li key={material.id}>
                             <Link 
-                              href={`/file/${file.id}`}
+                              href={`/file/${material.id}`}
                               className="text-foreground hover:underline"
                             >
-                              {file.fileName}
+                              {material.file_name}
                             </Link>
                           </li>
                         ))}
                       </ul>
                     )}
-                    {isExpanded && (!course.files || course.files.length === 0) && (
+                    {isExpanded && (!course.material || course.material.length === 0) && (
                       <p className="ml-6 mt-1 text-xs text-muted-foreground">
                         No files uploaded
                       </p>

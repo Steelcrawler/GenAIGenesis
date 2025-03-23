@@ -74,7 +74,7 @@ const Quiz = () => {
           // Quiz completed, calculate results and navigate
           const totalTime = Math.floor((Date.now() - startTime) / 1000);
           const result: QuizResult = calculateResults(questions, totalTime);
-          localStorage.setItem('quizResult', JSON.stringify(result));
+          // TODO save result in backend
           router.push("/quiz-results");
           return prevIndex;
         }

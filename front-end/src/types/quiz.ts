@@ -63,6 +63,7 @@ export { type Question, fromJson, toJson };
 export interface QuizConfig {
   length: number;
   optionsPerQuestion: number;
+  course?: string;
 }
 
 export interface QuizResult {

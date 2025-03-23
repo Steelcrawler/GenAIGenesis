@@ -12,6 +12,7 @@ import AnimatedTransition from '@/components/quiz/AnimatedTransition';
 
 const Index = () => {
   const router = useRouter();
+  const [course, setCourse] = useState<string | undefined>();
   const [courses, setCourses] = useState<courseObject[]>([]);
 
   useEffect(() => {
@@ -19,6 +20,7 @@ const Index = () => {
       try {
         // TODO: Make API call
         setCourses([])
+        // TODO: Get default course if any
       } catch (error) {
         console.error('Error initializing quiz:', error);
         // Handle error
@@ -68,7 +70,6 @@ const Index = () => {
                 defaultConfig={getDefaultQuizConfig()} 
                 onConfigSubmit={handleStartQuiz} 
                 handleCancel={handleCancel}
-                courses={courses}
               />
             </div>
           </AnimatedTransition>

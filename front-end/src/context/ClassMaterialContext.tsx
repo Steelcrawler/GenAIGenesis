@@ -131,9 +131,7 @@ export const MaterialProvider: React.FC<{ children: ReactNode, onMaterialChange?
       await apiService.delete(`${API_URL}/materials/${id}/`);
       
       setMaterials(prev => prev.filter(m => m.id !== id));
-      
-      //await refreshCourses();
-      
+            
       return true;
     } catch (err) {
       setError("Failed to delete material. Please try again.");

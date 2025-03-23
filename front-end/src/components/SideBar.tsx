@@ -3,9 +3,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, FolderOpen, Plus, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  FolderOpen,
+  Loader2,
+  Plus,
+  Search,
+  Upload,
+} from "lucide-react";
 import { useCourses } from "@/context/CourseContext";
-import { useAuth } from "@/context/AuthContext";
 import { useMaterials } from "@/context/ClassMaterialContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,15 +24,47 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const { filteredCourses, searchTerm, setSearchTerm } = useCourses();
-  const { getMaterialsByCourse } = useMaterials();
+  const { getMaterialsByCourse, createMaterial } = useMaterials();
+  // ↑^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  // Get createMaterial at the top level, outside the .map
+
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-
+  const [uploadingCourseId, setUploadingCourseId] = useState<string | null>(
+    null
+  );
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // MOVE handleFileUpload OUTSIDE of .map
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    courseId: string
+  ) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    setUploadingCourseId(courseId);
+
+    try {
+      const newMaterial = {
+        id: "",
+        file_name: file.name,
+        local_file: file,
+        course: courseId,
+      };
+
+      // Now we can use createMaterial without re-calling the hook
+      await createMaterial(newMaterial, courseId);
+    } catch (error) {
+      console.error("Failed to upload material:", error);
+    } finally {
+      setUploadingCourseId(null);
+    }
+  };
 
   return (
     <>
@@ -41,17 +79,21 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         className={cn(
           "fixed md:sticky top-0 bottom-0 left-0 z-50 md:z-0 h-screen w-[280px] flex flex-col",
           "bg-sidebar backdrop-blur-lg border-r border-sidebar-border transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0 shadow-lg md:shadow-none" : "-translate-x-full md:translate-x-0",
+          isOpen
+            ? "translate-x-0 shadow-lg md:shadow-none"
+            : "-translate-x-full md:translate-x-0",
           !mounted && "!transform-none"
         )}
       >
-
+        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
           <Link href="/courses" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
               <FolderOpen className="text-white h-4 w-4" />
             </div>
-            <h1 className="font-semibold text-lg text-sidebar-foreground">Courses</h1>
+            <h1 className="font-semibold text-lg text-sidebar-foreground">
+              Courses
+            </h1>
           </Link>
           <Button
             variant="ghost"
@@ -63,6 +105,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </Button>
         </div>
 
+        {/* Search Bar */}
         <div className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -75,11 +118,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </div>
         </div>
 
+        {/* Courses */}
         <nav className="flex-1 overflow-y-auto p-2">
           {filteredCourses.length > 0 ? (
             <ul className="space-y-1">
               {filteredCourses.map((course) => {
-                const isActive = pathname === `/course/${course.id}` || pathname === `/edit-course/${course.id}`;
+                const isActive =
+                  pathname === `/course/${course.id}` ||
+                  pathname === `/edit-course/${course.id}`;
                 const isExpanded = expandedCourseId === course.id;
                 const courseMaterials = getMaterialsByCourse(course.id);
 
@@ -101,25 +147,41 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                           isExpanded && "-rotate-90"
                         )}
                       />
-                      <span className="flex-1 truncate pr-2">{course.name}</span>
-                      
+                      <span className="flex-1 truncate pr-2">
+                        {course.name}
+                      </span>
+
+                      {/* Upload icon + hidden input */}
+                      <label className="cursor-pointer">
+                        <Upload className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                        <input
+                          type="file"
+                          hidden
+                          onChange={(e) => handleFileUpload(e, course.id)}
+                        />
+                      </label>
+
+                      {/* Spinner if uploading */}
+                      {uploadingCourseId === course.id && (
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      )}
                     </div>
 
                     {isExpanded && courseMaterials.length > 0 && (
                       <ul className="ml-6 mt-1 space-y-1 text-sm">
                         {courseMaterials.map((material) => (
                           <li key={material.id}>
-                            <Link 
+                            <Link
                               href={`/file/${material.id}`}
                               className="text-foreground hover:underline"
                             >
-                              {material.file_name.split('/').pop()}
+                              {material.file_name.split("/").pop()}
                             </Link>
                           </li>
                         ))}
                       </ul>
                     )}
-                    {isExpanded && (courseMaterials.length === 0) && (
+                    {isExpanded && courseMaterials.length === 0 && (
                       <p className="ml-6 mt-1 text-xs text-muted-foreground">
                         No files uploaded
                       </p>
@@ -135,7 +197,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           )}
         </nav>
 
-        <div className="border-t border-sidebar-border p-4 ">
+        {/* Footer: New Course Button */}
+        <div className="border-t border-sidebar-border p-4">
           <Link href="/new-course">
             <Button className="w-full gap-2 cursor-pointer">
               <Plus className="h-4 w-4" />

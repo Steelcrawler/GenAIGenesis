@@ -122,7 +122,8 @@ class QuizViewSet(viewsets.ModelViewSet):
         model_response = quiz_maker_rag.generate_response(
             query="",
             model=model,
-            quiz_length=len(selected_snippets)
+            quiz_length=len(selected_snippets),
+            options_per_question=new_quiz.options_per_question,
         )
         try:
             parsed_model_response = json.loads(model_response)

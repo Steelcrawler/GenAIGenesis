@@ -130,7 +130,7 @@ def upload_and_process_pdf(file_obj, bucket_name: str, user_id: str, course_id: 
     
     # Ensure all required fields are present in the results
     if not results.get("pdf_name"):
-        results["pdf_name"] = f"{user_id}/{course_id}/{file_name}"
+        results["pdf_name"] = file_name
     
     if "success" not in results:
         results["success"] = False if results.get("error") else True

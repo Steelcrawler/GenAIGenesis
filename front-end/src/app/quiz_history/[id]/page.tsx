@@ -1,16 +1,16 @@
 // File: app/quiz-history/[id]/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Info } from 'lucide-react';
 import { useQuizzes } from '@/context/QuizViewContext';
 import { useQuestions } from '@/context/QuestionContext';
+import { MaterialSnippet, useMaterialSnippets } from '@/context/MaterialSnippetContext';
 import SnippetContainer from '@/components/SnippetContainer';
 
 // Helper: Determine performance message and color based on percentage.
@@ -26,67 +26,80 @@ const getPerformanceInfo = (percentage: number) => {
   }
 };
 
-// Component to render a single question result.
 type QuestionResultItemProps = {
   question: any; // Replace with your proper Question type if available.
-  // If the question is linked to a snippet, we simulate a snippet object.
-  snippet?: { id: string; class_material: string; subject: string; snippet: string };
+  snippet?: MaterialSnippet;
 };
 
 const QuestionResultItem: React.FC<QuestionResultItemProps> = ({ question, snippet }) => {
-  const [showSnippet, setShowSnippet] = useState(false);
+  // Convert choices to an array if needed.
+  const choices = Array.isArray(question.choices)
+    ? question.choices
+    : typeof question.choices === 'string'
+      ? question.choices.split(';;/;;')
+      : [];
+
+  // Force the snippet: if getSnippet returned nothing, provide a fallback.
+  const forcedSnippet: MaterialSnippet | undefined = question.snippet_id
+    ? snippet || {
+        id: question.snippet_id,
+        class_material: "dummy_material",
+        subject: "Forced Subject",
+        snippet: "Forced snippet content: snippet not available from provider.",
+      }
+    : undefined;
 
   return (
     <Card className="mb-4 p-4">
-      <div className="flex justify-between items-center">
-        <h4 className="font-semibold">{question.question}</h4>
-        {snippet && (
-          <div className="relative">
-            <button
-              onMouseEnter={() => setShowSnippet(true)}
-              onMouseLeave={() => setShowSnippet(false)}
-              className="text-muted-foreground"
-              title="View snippet"
-            >
-              <Info size={20} />
-            </button>
-            {showSnippet && (
-              <div className="absolute z-10 top-full left-0 mt-2 w-64">
-                <SnippetContainer
-                  snippets={[snippet]}
-                  subjectName={snippet.subject} // Pass the subject as the title.
-                  onClose={() => setShowSnippet(false)}
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <h4 className="font-semibold">{question.question}</h4>
       <div className="mt-2">
-        <p>
-          <span className="font-medium">Your answer: </span>
-          {question.attempted_single_choice !== null ? question.attempted_single_choice : "No answer"}
-        </p>
-        <p>
-          <span className="font-medium">Correct answer: </span>
-          {question.single_correct_choice !== null ? question.single_correct_choice : "N/A"}
-        </p>
+        <ul className="space-y-2">
+          {choices.map((choice: string, index: number) => {
+            const isCorrect = question.single_correct_choice === index;
+            const isSelected = question.attempted_single_choice === index;
+            let choiceClasses = "p-2 border rounded";
+            if (isCorrect) choiceClasses += " border-green-500 bg-green-100";
+            if (isSelected && !isCorrect) choiceClasses += " border-red-500";
+            return (
+              <li key={index} className={choiceClasses}>
+                {choice}
+                {isSelected && (
+                  <span className="ml-2 text-sm font-medium text-blue-500">
+                    {isCorrect ? "(Your selection, correct)" : "(Your selection)"}
+                  </span>
+                )}
+                {!isSelected && isCorrect && (
+                  <span className="ml-2 text-sm font-medium text-green-500">
+                    (Correct answer)
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </div>
+      {question.snippet_id && (
+        <div className="mt-4">
+          <h5 className="text-md font-semibold">Question's source:</h5>
+          <SnippetContainer
+            snippets={[forcedSnippet!]}
+            subjectName={forcedSnippet?.subject || "Source"}
+            onClose={() => {}}
+          />
+        </div>
+      )}
     </Card>
   );
 };
 
 export default function QuizHistoryPage() {
-  const params = useParams();
+  const { id } = useParams() as { id: string };
   const router = useRouter();
-  const { id } = params as { id: string };
   const { getQuiz } = useQuizzes();
   const { questions } = useQuestions();
+  const { getSnippet } = useMaterialSnippets();
 
-  // Retrieve the quiz from the Quiz context.
   const quiz = getQuiz(id);
-
-  // Fallback: Quiz not found.
   if (!quiz) {
     return (
       <Layout>
@@ -100,15 +113,12 @@ export default function QuizHistoryPage() {
     );
   }
 
-  // Redirect to /courses if quiz is incomplete.
   useEffect(() => {
     if (!quiz.completed_at) {
       router.push("/courses");
     }
   }, [quiz, router]);
 
-  // Filter questions belonging to this quiz.
-  // Note: Make sure the filtering field matches your Question model. (I adjusted it from q.quiz to q.quiz_id if needed.)
   const quizQuestions = questions ? questions.filter(q => q.quiz === quiz.id) : [];
   const totalQuestions = quizQuestions.length;
   const correctAnswers = quizQuestions.filter(q => q.is_correct).length;
@@ -131,25 +141,18 @@ export default function QuizHistoryPage() {
           <div className={`text-6xl font-extrabold ${color}`}>{percentage}%</div>
           <div className="mt-2 text-xl font-semibold">{message}</div>
         </div>
-
+        
         {/* Questions List */}
         <div className="space-y-4">
-          {quizQuestions.map((question) => {
-            // If the question has a snippet, simulate a snippet object matching MaterialSnippet.
-            const snippet = question.snippet_id
-              ? { 
-                  id: question.snippet_id, 
-                  class_material: "dummy_material", // Replace with actual material ID if available.
-                  subject: "Example Subject",         // Replace with actual subject name if available.
-                  snippet: "This is the snippet content for the question." 
-                }
-              : undefined;
+          {quizQuestions.map(question => {
+            // Retrieve snippet from provider; if it returns nothing, our fallback in QuestionResultItem will kick in.
+            const snippet = question.snippet_id ? getSnippet(question.snippet_id) : undefined;
             return (
               <QuestionResultItem key={question.id} question={question} snippet={snippet} />
             );
           })}
         </div>
-
+        
         {/* Back Button */}
         <div className="mt-8 text-center">
           <Link href="/courses">

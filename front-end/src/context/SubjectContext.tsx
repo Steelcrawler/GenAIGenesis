@@ -46,6 +46,7 @@ export const SubjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
 
       const { data } = await apiService.get(url);
+      console.log("Received following subjects: ",data.subjects)
       setSubjects(Array.isArray(data.subjects) ? data.subjects : []);
     } catch (err) {
       setError("Failed to fetch subjects. Please try again.");

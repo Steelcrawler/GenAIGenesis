@@ -9,6 +9,7 @@ import { useCourses } from '@/context/CourseContext';
 import Layout from '@/components/Layout';
 import CourseCard from '@/components/CourseCard';
 import { toast } from 'sonner';
+import OpenQuizList from '@/components/quiz/OpenQuizList';
 
 export default function CoursesPage() {
   const { filteredCourses, deleteCourse, searchTerm } = useCourses();
@@ -46,8 +47,8 @@ export default function CoursesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => (
               <Link key={course.id} href={`/course/${course.id}`} className="block no-underline">
-                <CourseCard 
-                  course={course} 
+                <CourseCard
+                  course={course}
                   onDelete={(e) => {
                     e.preventDefault();
                     setCourseToDelete(course.id);
@@ -62,8 +63,8 @@ export default function CoursesPage() {
               {searchTerm ? 'No courses found' : 'No courses yet'}
             </h3>
             <p className="text-muted-foreground mb-6">
-              {searchTerm 
-                ? `Try adjusting your search term or clear it to see all courses.` 
+              {searchTerm
+                ? `Try adjusting your search term or clear it to see all courses.`
                 : `Let's create your first course to get started.`}
             </p>
             {!searchTerm && (
@@ -93,6 +94,10 @@ export default function CoursesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        {/* Open Quizzes Section */}
+        <div className="mt-12">
+          <OpenQuizList />
+        </div>
       </div>
     </Layout>
   );

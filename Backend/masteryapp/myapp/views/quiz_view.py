@@ -149,16 +149,52 @@ class QuizViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_201_CREATED)
         
         
+    @transaction.atomic
+    @action(detail=True, methods=['patch'], url_path='submit')
+    def submit(self, request, pk=None):
+        if pk is None:
+            return Response({
+                'error' : 'Tried to submit a quiz without providing quiz ID'
+            }, status=status.HTTP_400_BAD_REQUEST) # status.DUMBASS
+        
+        target_quiz: Quiz = get_object_or_404(Quiz, pk=pk)
+        
+        data = self.data.copy()
+        
+        submitted_questions = data.get('questions')
+        
+        if submitted_questions is None:
+            return Response({
+                'error' : 'Cannot submit quiz without providing related question.s final form.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        quiz_questions = Question.objects.filter(quiz=target_quiz).all()
+        quiz_questions_dict = {question.id: question for question in quiz_questions}
+        
+        if len(submitted_questions) != len(quiz_questions):
+            return Response({
+                'error' : 'Submitted questions length do not match quiz question length.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        for submit_question in submitted_questions:
+            #TODO : More than just multiple answer questions!
+            attempted_answer = submit_question['single_choice']
+            question: Question = quiz_questions_dict[submit_question['id']]
+            question.is_correct = int(attempted_answer) == question.single_correct_choice
+            question.save()
+        
+        target_quiz.completed_at = timezone.now()
+        target_quiz.save()
+        
+        final_questions = Question.objects.filter(quiz=target_quiz)
+        
+        return Response({
+            'quiz' : QuizSerializer(target_quiz).data,
+            'questions' : QuestionSerializer(final_questions, many=True)
+        }, status=status.HTTP_200_OK)
+            
         
         
-        
-        
-
-        
-
-
-
-
     def compute_mastery_score(self, subject, user):
         # Retrieve questions for this user and subject.
         questions = Question.objects.filter(quiz__user=user, snippet__subject=subject)

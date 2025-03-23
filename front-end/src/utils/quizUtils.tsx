@@ -1,9 +1,10 @@
-import { QuizConfig, Question, QuizResult } from "@/types/quiz";
+import { QuizConfig, QuizResult } from "@/types/quiz";
+import { Question } from "@/context/QuestionContext";
   
   // Calculate results
   export const calculateResults = (questions: Question[], timeTaken: number): QuizResult => {
     const correctAnswers = questions.filter(question => {
-      return question?.isCorrect;
+      return question?.is_correct!;
     }).length;
     
     return {
@@ -15,14 +16,17 @@ import { QuizConfig, Question, QuizResult } from "@/types/quiz";
   
   // Check if an answer is correct
   export const isAnswerCorrect = (question: Question, selectedOptionId: string): boolean => {
-    return question.isCorrect || false;
+    return question.is_correct || false;
   };
   
   // Get default quiz config
   export const getDefaultQuizConfig = (): QuizConfig => {
     return {
-      length: 5,
-      optionsPerQuestion: 4
+      length: 20,
+      optionsPerQuestion: 4,
+      course: "Math",
+      subjects: ["math"],
+      materials: ["vectors"],
     };
   };
   

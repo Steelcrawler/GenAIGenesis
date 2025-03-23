@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft, FolderOpen, Plus, Search } from "lucide-react";
 import { useCourses } from "@/context/CourseContext";
-import { useAuth } from "@/context/AuthContext";
 import { useMaterials } from "@/context/ClassMaterialContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const { getMaterialsByCourse } = useMaterials();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
@@ -91,9 +91,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                         isActive && "border-l-4 border-black",
                         isExpanded && "bg-sidebar-accent"
                       )}
-                      onClick={() =>
-                        setExpandedCourseId(isExpanded ? null : course.id)
-                      }
+                      onClick={() => {
+                        setExpandedCourseId(isExpanded ? null : course.id);
+                        router.push(`/course/${course.id}`)
+                      }}
                     >
                       <ChevronLeft
                         className={cn(

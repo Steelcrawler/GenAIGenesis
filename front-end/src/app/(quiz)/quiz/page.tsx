@@ -1,14 +1,16 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/quiz/Navbar';
 import QuizQuestion from '@/components/quiz/QuizQuestion';
 import ProgressBar from '@/components/quiz/ProgressBar';
 import AnimatedTransition from '@/components/quiz/AnimatedTransition';
-import { Question, QuizResult } from '@/types/quiz';
+import { QuizResult } from '@/types/quiz';
 import { calculateResults } from '@/utils/quizUtils';
 import { Clock } from 'lucide-react';
+import { useQuestions, Question } from '@/context/QuestionContext';
+import { useQuizzes } from '@/context/QuizViewContext';
 
 const Quiz = () => {
   const router = useRouter();
@@ -18,33 +20,21 @@ const Quiz = () => {
   const [elapsed, setElapsed] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  const allQuestions = useQuestions().questions;
+  const { currentQuiz } = useQuizzes();
 
   // Initialize quiz
   useEffect(() => {
     const initQuiz = () => {
-      try {
-        // TODO: Make API call
-        setQuestions([
-            {
-              id: "1",
-              question: "What is 9 + 10?",
-              choices: ["1", "10", "21"],
-              type: "MULTIPLE_CHOICE",
-              quizId: "1"
-            },
-            {
-              id: "2",
-              question: "What is 9 + 10?",
-              choices: ["1", "11", "21"],
-              type: "MULTIPLE_CHOICE",
-              quizId: "1"
-            },
-        ])
-        setIsLoading(false)
-      } catch (error) {
-        console.error('Error initializing quiz:', error);
-        // Handle error
+      if (!currentQuiz) {
+        console.log("Current quiz is not set!");
+        return;
       }
+
+      setQuestions(allQuestions ? 
+        allQuestions
+          .filter(question => question.quiz_id == currentQuiz.id!)
+        : [])
     };
 
     // Initialize with a small delay for loading animation
@@ -74,7 +64,7 @@ const Quiz = () => {
           // Quiz completed, calculate results and navigate
           const totalTime = Math.floor((Date.now() - startTime) / 1000);
           const result: QuizResult = calculateResults(questions, totalTime);
-          localStorage.setItem('quizResult', JSON.stringify(result));
+          // TODO save result in backend
           router.push("/quiz-results");
           return prevIndex;
         }

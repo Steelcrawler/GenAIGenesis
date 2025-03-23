@@ -34,9 +34,7 @@ def get_predefined_colors() -> List[Tuple[float, float, float]]:
         (0.8, 1.0, 0.8),  # Light Green
         (0.8, 0.8, 1.0),  # Light Blue
         (1.0, 1.0, 0.8),  # Light Yellow
-        (1.0, 0.8, 1.0),  # Light Purple
         (0.8, 1.0, 1.0),  # Light Cyan
-        (0.9, 0.9, 0.7),  # Light Tan
         (0.9, 0.7, 0.9),  # Light Lavender
         (0.7, 0.9, 0.9),  # Light Aqua
         (1.0, 0.9, 0.7),  # Light Orange
@@ -73,10 +71,11 @@ def upload_file_to_gcs(storage_client, bucket_name: str, blob_name: str, data: i
         logger.error(f"Error uploading file to GCS: {str(e)}")
         return False
 
-def get_json_data_from_gcs(storage_client, bucket_name: str, json_blob_name: str) -> Dict[str, Any]:
+def get_json_data_from_gcs(storage_client, bucket_name: str, file_blob_name: str) -> Dict[str, Any]:
     """Get JSON data from GCS bucket"""
     try:
         bucket = storage_client.bucket(bucket_name)
+        json_blob_name = file_blob_name.rsplit('.', 1)[0] + '.json'
         blob = bucket.blob(json_blob_name)
         
         json_data = json.loads(blob.download_as_text())
@@ -256,7 +255,7 @@ def highlight_pdf_with_subjects(storage_client, bucket_name: str, pdf_blob_name:
         results["error"] = f"Error marking PDF: {str(e)}"
         return results
 
-def process_pdf_with_subjects(pdf_path: str, json_path: str, credentials_path: Optional[str] = None, bucket_name: str = "educatorgenai") -> Dict[str, Any]:
+def process_pdf_with_subjects(pdf_path: str, credentials_path: Optional[str] = None, bucket_name: str = "educatorgenai") -> Dict[str, Any]:
     """
     Process a PDF file with subjects from a JSON file and return the highlighted PDF.
     
@@ -274,6 +273,7 @@ def process_pdf_with_subjects(pdf_path: str, json_path: str, credentials_path: O
         - pdf_bytes: BytesIO object containing the marked PDF data
         - error: Error message if any
     """
+    json_path = pdf_path.rsplit('.', 1)[0] + '.json'
     results = {
         "success": False,
         "marked_pdf_url": "",
@@ -303,9 +303,7 @@ def process_pdf_with_subjects(pdf_path: str, json_path: str, credentials_path: O
 if __name__ == "__main__":
     # Example usage
     pdf_path = "john2/lec02_2_DecisionTrees_complete.pdf"
-    json_path = "john2/lec02_2_DecisionTrees_complete.json"
     
-    # Use Application Default Credentials by default
     credentials_path = None
     
     # Log authentication method
@@ -314,7 +312,7 @@ if __name__ == "__main__":
     else:
         logger.info("Using Application Default Credentials")
     
-    results = process_pdf_with_subjects(pdf_path, json_path, credentials_path)
+    results = process_pdf_with_subjects(pdf_path, credentials_path)
     
     # Print results
     print("\nProcessing Results:")

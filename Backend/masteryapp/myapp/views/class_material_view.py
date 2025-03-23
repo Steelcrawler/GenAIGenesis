@@ -15,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from ..gcp.uploadpdf import upload_and_process_pdf
+from ..gcp.uploadpdf import upload_process_and_highlight_pdf
 from ..models.course import Course
 from ..models.subject import Subject
 from ..models.material_snippet import MaterialSnippet
@@ -45,7 +45,7 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
             bucket_name="educatorgenai",
             user_id=request.user.id,
             course_id=class_material.course.id,
-            blob_name=class_material.file_name.split('/').pop(),
+            file_name=class_material.file_name.split('/').pop(),
         )
         encoded_file = base64.b64encode(file_bytes).decode('utf-8')
         print('Received detailed request, sending data: ')
@@ -86,7 +86,7 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
         existing_subjects_qs = Subject.objects.filter(course__id=course_id)
         existing_subjects = {str(subcat.name.lower()): subcat for subcat in existing_subjects_qs}
         print('user_id: ', str(request.user.id))
-        parse_result = upload_and_process_pdf(file_obj=pdf_file, 
+        parse_result = upload_process_and_highlight_pdf(file_obj=pdf_file, 
                                               bucket_name="educatorgenai", 
                                               user_id=str(request.user.id),
                                               credentials_path='genaigenesis-454500-2b74084564ba.json',
@@ -94,9 +94,10 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
                                               course_id=course_id,
                                               )
         
-        success, text_partition_status = parse_result.get('success', False), parse_result.get('text_extracted', False)
+        print('parse_result: ', parse_result)
+        success = parse_result.get('success', False)
         
-        if not success or not text_partition_status:
+        if not success:
             return Response({
                 'error' : 'Parse method failed'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -112,7 +113,7 @@ class ClassMaterialViewSet(viewsets.ModelViewSet):
                 )
                 existing_subjects[subject_name.lower()] = new_subject
             
-        all_partitions = parse_result['partitioned_text']
+        all_partitions = parse_result['text_partitions']
         
         # By now, creating a class_material is required.
         new_material = ClassMaterial.objects.create(

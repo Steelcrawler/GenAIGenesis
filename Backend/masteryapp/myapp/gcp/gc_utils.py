@@ -138,8 +138,16 @@ def get_pdf_bytes_from_gcs(bucket_name: str, user_id: str, course_id: str, file_
     try:
         storage_client = get_storage_client(credentials_path)
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(f"{user_id}/{course_id}/{file_name}_highlighted.pdf")
-        return blob.download_as_bytes()
+        base_file_name = file_name.split('.')[0]  # Get everything before the first period
+        
+        # Attempt to get the highlighted PDF first
+        highlighted_blob = bucket.blob(f"{user_id}/{course_id}/{base_file_name}_highlighted.pdf")
+        if highlighted_blob.exists():
+            return highlighted_blob.download_as_bytes()
+        
+        # If highlighted PDF does not exist, get the regular PDF
+        regular_blob = bucket.blob(f"{user_id}/{course_id}/{file_name}")
+        return regular_blob.download_as_bytes()
     except Exception as e:
         logger.error(f"Error getting PDF bytes from GCS: {str(e)}")
         raise

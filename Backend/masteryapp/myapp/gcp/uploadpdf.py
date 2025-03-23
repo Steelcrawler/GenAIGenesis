@@ -191,6 +191,8 @@ def upload_process_and_highlight_pdf(file_obj, bucket_name: str, user_id: str, c
         return {
             "success": True,
             "pdf_name": file_name,
+            "subjects": results['subjects'],
+            "text_partitions": results['partitioned_text'],
             "highlighted_bytes": highlight_results['pdf_bytes'],
             "highlighted_pdf_url": highlight_results['marked_pdf_url']
         }

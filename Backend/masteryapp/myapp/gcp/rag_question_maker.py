@@ -88,7 +88,7 @@ class QuizMakerRAG:
                 print(f"  Local path: {local_path}")
             
             with open(local_path, 'w') as f:
-                json.dump(data_list, f)
+                json.dump(data_list, f, default=str)
                 
             if self.debug:
                 print(f"\nTemporary file created. Size: {os.path.getsize(local_path)} bytes")

@@ -7,17 +7,18 @@ import QuizConfig from '@/components/quiz/QuizConfig';
 import { QuizConfig as QuizConfigType } from '@/types/quiz';
 import { getDefaultQuizConfig } from '@/utils/quizUtils';
 import { Brain } from 'lucide-react';
-import { courseObject } from "@/components/quiz-popup"
 import AnimatedTransition from '@/components/quiz/AnimatedTransition';
 import { useCourses, Course } from "@/context/CourseContext"
 import { useCurrentCourse } from "@/context/CurrentCourseContext"
 import { useQuizzes } from '@/context/QuizViewContext';
+import { Loader } from 'lucide-react'
 
 const Index = () => {
   const router = useRouter();
   const { createQuiz } = useQuizzes();
   const [course, setCourse] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[] | null>(null);
+  const [isloading, setIsloading] = useState(false);
   const { currentCourseId } = useCurrentCourse();
   const context = useCourses();
 
@@ -36,20 +37,22 @@ const Index = () => {
     router.back()
   }
   
-  const handleStartQuiz = (config: QuizConfigType) => {
-    if (!course) {
+  async function handleStartQuiz(config: QuizConfigType) {
+    if (!config.course) {
       alert("Please select a course.")
       return;
     }
+    setIsloading(true);
 
-    createQuiz({
-      course_id: config.course,
+    await createQuiz({
+      course: config.course,
       subjects: config.subjects,
       materials: config.materials,
       optionsPerQuestion: config.optionsPerQuestion,
       quiz_length: config.length
     })
 
+    setIsloading(false);
     router.push('/quiz');
   };
 
@@ -86,6 +89,12 @@ const Index = () => {
           </AnimatedTransition>
         </div>
       </main>
+
+      {isloading && (
+  <div className="fixed inset-0 flex items-center justify-center bg-light-grey bg-opacity-10 z-50">
+    <Loader className="w-12 h-12 animate-spin text-white" />
+  </div>
+)}
     </div>
   );
 };

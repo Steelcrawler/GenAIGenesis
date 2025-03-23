@@ -3,12 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { ChevronLeft, FolderOpen, Plus, Search } from "lucide-react";
 import {
-  ChevronLeft,
-  FolderOpen,
   Loader2,
-  Plus,
-  Search,
   Trash,
   Upload,
 } from "lucide-react";

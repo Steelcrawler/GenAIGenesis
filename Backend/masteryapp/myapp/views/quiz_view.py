@@ -64,6 +64,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         human_date = now.strftime("%d %B")
         data['name'] = data.get('name', f'{human_date} quiz')
         serializer = QuizSerializer(data=data)
+        print(f"QuizView Create data: {data}")
         if not serializer.is_valid():
             return Response({
                 'error' : serializer.errors
@@ -93,8 +94,8 @@ class QuizViewSet(viewsets.ModelViewSet):
         weighted_snippets = []
         for snippet in source_snippets:
             subject = snippet.subject
-            mastery = self.compute_mastery_score(self, subject, request.user)
-            weight = self.compute_weight(self, mastery)
+            mastery = self.compute_mastery_score(subject, request.user)
+            weight = self.compute_weight(mastery)
             weighted_snippets.append((snippet, weight))
 
         selected_snippets = random.choices(
@@ -108,8 +109,8 @@ class QuizViewSet(viewsets.ModelViewSet):
         for snippet in selected_snippets:
             counter+=1
             data_list.append({
-                'id' : snippet.id,
-                'snippet' : snippet.snippet,
+                'id' : str(snippet.id),
+                'snippet' : str(snippet.snippet),
                 'commented_count_helper': counter,
             })
         
@@ -148,7 +149,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         
         return Response({
             'quiz' : QuizSerializer(new_quiz).data,
-            'questions' : QuestionSerializer(final_questions, many=True)
+            'questions' : QuestionSerializer(final_questions, many=True).data
         },
                         status=status.HTTP_201_CREATED)
         

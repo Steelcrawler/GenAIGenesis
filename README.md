@@ -1,4 +1,4 @@
-# PDF Subject Extractor
+# mAIstro!
 
 A system that processes PDFs directly from Google Cloud Storage to identify key subjects, checks if they exist in a database, and adds new subjects to the database. It uses LLM-enhanced text extraction for better structure understanding and subject identification.
 
